@@ -6,9 +6,6 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
-use \Firebase\JWT\JWT;
-
-//$app = new \Slim\App;
 
 require '../db/boardOperations.php';
 
@@ -51,7 +48,7 @@ $app->post('/api/board/create', function(Request $request, Response $response) {
     $jwt = $token->getToken($request);
 
     $id_owner = $jwt->user[0]->id;
-    $name = $request->getParam('name');
+    $name = trim($request->getParam('name'));
 
     $db = new boardOperations();
     $db->createBoard($name, $id_owner);
@@ -66,7 +63,7 @@ $app->post('/api/board/create', function(Request $request, Response $response) {
 $app->put('/api/board/{id}', function(Request $request, Response $response) {
 
     $id = $request->getAttribute('id');
-    $name = $request->getParam('name');
+    $name = trim($request->getParam('name'));
 
     $db = new boardOperations();
 

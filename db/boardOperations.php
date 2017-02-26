@@ -107,7 +107,7 @@ class boardOperations
 
     public function isNameCorrect($name)
     {
-        if (trim($name) === '' || $name === null) {
+        if ($name === null) {
             echo '{"error": {"text": "Nazwa tablicy nie może być pusta!"}}';
             return false;
         } else {

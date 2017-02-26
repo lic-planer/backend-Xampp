@@ -18,7 +18,7 @@ class userOperations
     public function createUser($username, $pass, $email, $avatar)
     {
 
-        if ((trim($username) === '' || $username === null) ||  (trim($email) === '' || $email === null) || $pass === null) {
+        if ($username === null || $email === null || $pass === null) {
             echo '{"error": {"text": "Pole nazwa użytkownika, hasło i email nie mogą być puste!"}}';
         } elseif ($this->isUsernameInUse($username) || $this->isEmailInUse($email) || !$this->isUsernameCorrect($username)
             || !$this->isEmailCorrect($email) || !$this->isPasswordCorrect($pass)) {
@@ -118,7 +118,7 @@ class userOperations
     {
         $usernameLen = strlen($username);
 
-        if (preg_match("/^[a-zA-Z0-9]+$/",$username) && ($usernameLen > 3 && $usernameLen < 30)) {
+        if (preg_match("/^[a-zA-Z0-9]+$/",$username) && ($usernameLen >= 3 && $usernameLen <= 30)) {
             return true;
         } else {
             echo '{"error": {"text": "Nieprawidłowa nazwa użytkownika! 

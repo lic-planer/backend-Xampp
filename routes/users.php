@@ -50,9 +50,9 @@ $app->get('/api/user', function(Request $request, Response $response) {
 */
 $app->post('/api/user/registration', function(Request $request, Response $response) {
 
-    $username = $request->getParam('username');
+    $username = trim($request->getParam('username'));
     $password = $request->getParam('password');
-    $email = $request->getParam('email');
+    $email = trim($request->getParam('email'));
     $avatar = $request->getParam('avatar');
 
     $db = new userOperations();
@@ -116,8 +116,8 @@ $app->put('/api/user', function(Request $request, Response $response) {
     $jwt = $token->getToken($request);
 
     $id = $jwt->user[0]->id;
-    $email = $request->getParam('email');
-    $password = $request->getParam('password');
+    $email = trim($request->getParam('email'));
+    $password = trim($request->getParam('password'));
 
     $db = new userOperations();
 

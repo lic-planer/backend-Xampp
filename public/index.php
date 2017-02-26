@@ -21,5 +21,6 @@ $app->add(new \Slim\Middleware\JwtAuthentication([
 require '../db/db.php';
 require '../routes/users.php';
 require '../routes/boards.php';
+require '../routes/lists.php';
 
 $app->run();
