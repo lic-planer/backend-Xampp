@@ -1,11 +1,11 @@
 <?php
 
-class dbOperation
+class userOperations
 {
     private $con = null;
 
     function __construct() {
-        require_once  '../src/db.php';
+        require_once '../db/config.php';
 
         try {
             $db = new db();
@@ -17,14 +17,22 @@ class dbOperation
 
     public function createUser($username, $pass, $email, $avatar)
     {
-        if ($this->isUsernameInUse($username)) {
+        $usernameLen = strlen($username);
+        $passwordLen = strlen($pass);
+
+        if ($username === null ||  $email === null || $pass === null ) {
+            echo '{"error": {"text": "Pole nazwa użytkownika, hasło i email nie mogą być puste!"}}';
+        } elseif ($this->isUsernameInUse($username)) {
             echo '{"error": {"text": "Użytkownik o podanym nicku już istnieje!"}}';
         } elseif ($this->isEmailInUse($email)) {
             echo '{"error": {"text": "Użytkownik o podanym mailu już istnieje!"}}';
+        } elseif (!$this->isUsernameCorrect($username) || ($usernameLen < 3 || $usernameLen > 30)) {
+            echo '{"error": {"text": "Nieprawidłowa nazwa użytkownika! 
+            Nazwa użytkownika musi zawierać od 3 do 30 znaków, składać się z liter i cyfr oraz nie może zawierać spacji!"}}';
         } elseif (!$this->isEmailCorrect($email)) {
             echo '{"error": {"text": "Niepoprawny format maila!"}}';
-        } elseif (!$this->isUsernameCorrect($username)) {
-            echo '{"error": {"text": "Nieprawidłowy login! Login musi się składać z liter i cyfr oraz nie może zawierać spacji!"}}';
+        } elseif ($passwordLen < 8) {
+            echo '{"error": {"text": "Hasło musi zawierać minimum 8 znaków!"}}';
         } else {
             $password = md5($pass);
 
@@ -33,12 +41,11 @@ class dbOperation
                 $stmt->execute(array($username, $password, $email, $avatar));
 
                 echo '{"notice": {"text": "User Added"}}';
-
             } catch (PDOException $e) {
-                //echo '{"error": {"text": '.$this->isUsernameInUse($username).'}}';
                 echo '{"error": {"text": ' . $e->getMessage() . '}}';
             }
         }
+
     }
 
 
@@ -57,7 +64,7 @@ class dbOperation
         }
     }
 
-    private function isEmailInUse($email)
+    public function isEmailInUse($email)
     {
         $stmt = $this->con->prepare("SELECT id FROM user WHERE email=?");
         $stmt->execute(array($email));
@@ -89,9 +96,44 @@ class dbOperation
         }
     }
 
+    public function getUserByUsername($username)
+    {
+        $stmt = $this->con->prepare("SELECT * FROM user WHERE username=?");
+        $stmt->execute(array($username));
+        $user = $stmt->fetchAll(PDO::FETCH_OBJ);
+        return $user;
+    }
 
+    public function getUserByEmail($email)
+    {
+        $stmt = $this->con->prepare("SELECT * FROM user WHERE email=?");
+        $stmt->execute(array($email));
+        $user = $stmt->fetchAll(PDO::FETCH_OBJ);
+        return $user;
+    }
 
-    public function checkLogin($username, $password, $email)
+    public function checkLogin($username, $password)
+    {
+        $passwordHash = md5($password);
+        $stmt = $this->con->prepare("SELECT password FROM user WHERE username=?");
+        $stmt->execute(array($username));
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $num_rows = $stmt->rowCount();
+
+        if ($num_rows > 0) {
+            if ($passwordHash === $user['password']) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    //Logowanie przy użyciu username lub email
+
+    /* public function checkLogin($username, $password, $email)
     {
         $passwordHash = md5($password);
         $stmt = $this->con->prepare("SELECT password FROM user WHERE (username=? OR email=?)");
@@ -108,22 +150,6 @@ class dbOperation
         } else {
             return false;
         }
-    }
+    }*/
 
-
-    public function getUserByUsername($username)
-    {
-        $stmt = $this->con->prepare("SELECT * FROM user WHERE username=?");
-        $stmt->execute(array($username));
-        $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-        return $user;
-    }
-
-    public function getUserByEmail($email)
-    {
-        $stmt = $this->con->prepare("SELECT * FROM user WHERE email=?");
-        $stmt->execute(array($email));
-        $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-        return $user;
-    }
 }
