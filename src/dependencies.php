@@ -1,7 +1,6 @@
 <?php
 // DIC configuration
 
-
 $container = $app->getContainer();
 
 // view renderer
@@ -17,9 +16,4 @@ $container['logger'] = function ($c) {
     $logger->pushProcessor(new Monolog\Processor\UidProcessor());
     $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
     return $logger;
-};
-
-// jwt
-$container["jwt"] = function ($container) {
-    return new StdClass;
 };

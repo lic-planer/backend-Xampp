@@ -1,50 +1,21 @@
 <?php
-use \Psr\Http\Message\ServerRequestInterface as Request;
-use \Psr\Http\Message\ResponseInterface as Response;
-use Monolog\Logger;
-use Monolog\Handler\RotatingFileHandler;
 
 require '../vendor/autoload.php';
 
-$app = new \Slim\App;
-
-$logger = new Logger("slim");
-$rotating = new RotatingFileHandler(__DIR__ . "/logs/slim.log", 0, Logger::DEBUG);
-$logger->pushHandler($rotating);
-
-$container = $app->getContainer();
-
-$container["jwt"] = function ($container) {
-    return new StdClass;
-};
-
-$app->jwt = [
-    "id" => 1,
-    "username" => "olik",
-    "emial" => "olik@op.pl"
-];
+$app = new \Slim\App();
 
 $app->add(new \Slim\Middleware\JwtAuthentication([
-    "algorithm" => ["HS256", "HS384"],
-    "attribute" => "jwt",
-    "environment" => "HTTP_X_TOKEN",
-    "header" => "X-Token",
+    "secret" => "ziomkizparszywejpiatki",
+    "secure" => false,
     "path" => "/api",
-    "logger" => $logger,
-    "secret" => "supersecretkeyyoushouldnotcommittogithub",
-    "callback" => function ($request, $response, $arguments) use ($container) {
-        $container["jwt"] = $arguments["decoded"];
-    },
-    "error" => function ($request, $response, $arguments) {
-        $data["status"] = "error";
-        $data["message"] = $arguments["message"];
-        return $response
-            ->withHeader("Content-Type", "application/json")
-            ->write(json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-    }
+    "passthrough" =>["/api/user/login", "/api/user/registration"],
+    //"callback" => function ($request, $response, $arguments) use ($container) {
+    //    $container["jwt"] = $arguments["decoded"];
+    //}
 ]));
 
-require  '../src/db.php';
-require '../src/routes.php';
+require '../db/db.php';
+require '../routes/users.php';
+require '../routes/boards.php';
 
 $app->run();
