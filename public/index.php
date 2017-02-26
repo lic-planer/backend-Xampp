@@ -2,7 +2,11 @@
 
 require '../vendor/autoload.php';
 
-$app = new \Slim\App();
+$app = new \Slim\App([
+    'settings' => [
+        'displayErrorDetails' => true
+    ]
+]);
 
 $app->add(new \Slim\Middleware\JwtAuthentication([
     "secret" => "ziomkizparszywejpiatki",
@@ -14,7 +18,7 @@ $app->add(new \Slim\Middleware\JwtAuthentication([
     //}
 ]));
 
-require '../db/db.php';
+require '../db/config.php';
 require '../routes/users.php';
 require '../routes/boards.php';
 

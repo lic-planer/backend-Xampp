@@ -5,7 +5,7 @@ class userOperations
     private $con = null;
 
     function __construct() {
-        require_once '../db/db.php';
+        require_once '../db/config.php';
 
         try {
             $db = new db();

@@ -8,7 +8,11 @@ use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 use \Firebase\JWT\JWT;
 
+define('SECRET','ziomkizparszywejpiatki');
+define('ALGORITHM','HS256');
+
 require '../db/userOperations.php';
+require '../src/token.php';
 
 /*Get All Users
  *Method: GET
@@ -35,12 +39,16 @@ $app->get("/api/users", function ($request, $response, $arguments) {
 
 /*Get Single User
  *Method: GET
- *Route: /api/user/{id}
+ *Route: /api/user
  *Param: -
 */
-$app->get('/api/user/{id}', function(Request $request, Response $response) {
+$app->get('/api/user', function(Request $request, Response $response) {
 
-    $id = $request->getAttribute('id');
+    $token = new token();
+    $jwt = $token->getToken($request);
+
+    $id = $jwt->user[0]->id;
+
     $sql = "SELECT * FROM user WHERE id = $id";
 
     try {
@@ -119,7 +127,7 @@ $app->post("/api/user/login", function ($request, $response, $arguments) {
             "user" => $user,
         ];
 
-        $token = JWT::encode($payload, 'ziomkizparszywejpiatki');
+        $token = JWT::encode($payload, SECRET);
         $data["status"] = "ok";
         $data["token"] = $token;
 
@@ -134,12 +142,15 @@ $app->post("/api/user/login", function ($request, $response, $arguments) {
 
 /*Update email || password
  *Method: PUT
- *Route: /api/user/{id}
+ *Route: /api/user
  *Param: email || password
 */
-$app->put('/api/user/{id}', function(Request $request, Response $response) {
+$app->put('/api/user', function(Request $request, Response $response) {
 
-    $id = $request->getAttribute('id');
+    $token = new token();
+    $jwt = $token->getToken($request);
+
+    $id = $jwt->user[0]->id;
     $email = $request->getParam('email');
     $password = $request->getParam('password');
 
@@ -197,13 +208,17 @@ $app->put('/api/user/{id}', function(Request $request, Response $response) {
 
 /*Deactivate user
  *Method: PUT
- *Route: /api/user/{id}/deactivate
+ *Route: /api/user/deactivate
  *Param: -
 */
 
-$app->put('/api/user/{id}/deactivate', function(Request $request, Response $response) {
+$app->put('/api/user/deactivate', function(Request $request, Response $response) {
 
-    $id = $request->getAttribute('id');
+    $token = new token();
+    $jwt = $token->getToken($request);
+
+    $id = $jwt->user[0]->id;
+
     $activate = 0;
     $sql = "UPDATE user SET
         activate = :activate
