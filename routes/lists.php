@@ -90,7 +90,7 @@ $app->delete("/api/list/{id}", function ($request, $response, $arguments) {
  *Method: POST
  *Route: /api/board/{id}/lists
  *Param: list_order
-*/ //  TRZEBA PODAC WSZYSTKIE LISTY Z DANEJ TABLICY
+*/
 $app->post("/api/board/{id}/lists", function ($request, $response, $arguments) {
 
     $id_board = $request->getAttribute('id');

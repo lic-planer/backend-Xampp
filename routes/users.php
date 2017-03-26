@@ -12,17 +12,6 @@ define('ALGORITHM','HS256');
 require '../db/userOperations.php';
 require '../src/token.php';
 
-/*Get All Users
- *Method: GET
- *Route: /api/users
- *Param: -
-*/
-$app->get("/api/users", function ($request, $response, $arguments) {
-
-    $db = new userOperations();
-    $db->getUsers();
-
-});
 
 /*Get Single User
  *Method: GET
@@ -168,3 +157,55 @@ $app->get('/verify', function(Request $request, Response $response) {
     }
 });
 
+/*Add avatar
+ *Method: POST
+ *Route: /api/avatar
+ *Param: avatar
+ */
+$app->post('/api/avatar', function(Request $request, Response $response) {
+
+    $files = $request->getUploadedFiles();
+    $avatar = ($files["avatar"]);
+
+    if ($files != null) {
+        $avatarType = 'type';
+        $avatarName = 'name';
+        $file = $avatar->file;
+        $token = new token();
+        $jwt = $token->getToken($request);
+        $id = $jwt->user[0]->id;
+
+        $db = new userOperations();
+        $avatarName = $db->getProtectedValue($avatar, $avatarName);
+        $avatarType = $db->getProtectedValue($avatar, $avatarType);
+
+        if ($db->checkTheImageType($avatarType)) {
+            if ($db->avatarExists($id)) {
+                $db->deleteAvatarFromFolder($id);
+                $db->deleteAvatar($id);
+            }
+            $db->saveAvatarToFolder($id, $file, $avatarName);
+            $db->addAvatarToDatabase($id, $avatarName);
+        }
+    } else {
+        echo '{"error": {"text": "Nie wybrano pliku!"}}';
+    }
+});
+
+/*Delete avatar
+ *Method: DELETE
+ *Route: /api/avatar
+ *Param: -
+ */
+$app->delete('/api/avatar', function(Request $request, Response $response) {
+
+    $token = new token();
+    $jwt = $token->getToken($request);
+    $id = $jwt->user[0]->id;
+
+    $db = new userOperations();
+    if ($db->avatarExists($id)) {
+        $db->deleteAvatarFromFolder($id);
+        $db->deleteAvatar($id);
+    }
+});

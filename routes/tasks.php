@@ -53,7 +53,7 @@ $app->post("/api/list/{id}/task", function ($request, $response, $arguments) {
 /*Update task
  *Method: PUT
  *Route: /api/task/{id}
- *Param: name || term || desc || attachment
+ *Param: name || term || desc
 */
 $app->put("/api/task/{id}", function ($request, $response, $arguments) {
 
@@ -61,7 +61,6 @@ $app->put("/api/task/{id}", function ($request, $response, $arguments) {
     $name = trim($request->getParam('name'));
     $term = trim($request->getParam('term'));
     $description = trim($request->getParam('description'));
-    $attachment = trim($request->getParam('attachment'));
 
     $db = new taskOperations();
 
@@ -73,8 +72,6 @@ $app->put("/api/task/{id}", function ($request, $response, $arguments) {
         }
     } elseif ($description !== '') {
         $db->updateDescription($id, $description);
-    } elseif ($attachment !== '') {
-        $db->updateAttachment($id, $attachment);
     }
 
 });
@@ -98,7 +95,7 @@ $app->delete("/api/task/{id}", function ($request, $response, $arguments) {
  *Method: POST
  *Route: /api/list/{id}/tasks
  *Param: task_order
-*/ //  TRZEBA PODAC WSZYSTKIE ZADANIA Z DANEJ LISTY
+*/
 $app->post("/api/list/{id}/tasks", function ($request, $response, $arguments) {
 
     $id_list = $request->getAttribute('id');
@@ -109,4 +106,49 @@ $app->post("/api/list/{id}/tasks", function ($request, $response, $arguments) {
     if ($db->existTasksInList($id_list, $task)) {
         $db->updateOrder($id_list, $task);
     }
+});
+
+/*Add attachment
+ *Method: POST
+ *Route: /api/task/{id}/attachment
+ *Param: attachment
+ */
+$app->post('/api/task/{id}/attachment', function(Request $request, Response $response) {
+
+    $id = $request->getAttribute('id');
+    $files = $request->getUploadedFiles();
+    $attachment = ($files["attachment"]);
+
+    if ($files != null) {
+
+        $attachName = 'name';
+        $file = $attachment->file;
+
+        $db = new taskOperations();
+        $attachName = $db->getProtectedValue($attachment, $attachName);
+
+        if ($db->fileExists($id)) {
+            $db->deleteFileFromFolder($id);
+            $db->deleteFileFromDatabase($id);
+        }
+        $db->saveFileToFolder($id, $file, $attachName);
+        $db->addFileToDatabase($id, $attachName);
+
+    } else {
+        echo '{"error": {"text": "Nie wybrano pliku!"}}';
+    }
+});
+
+/*Delete attachment
+ *Method: DELETE
+ *Route: /api/task/{id}/attachment
+ *Param: -
+ */
+$app->delete('/api/task/{id}/attachment', function(Request $request, Response $response) {
+
+    $id = $request->getAttribute('id');
+
+    $db = new taskOperations();
+    $db->deleteFileFromFolder($id);
+    $db->deleteFileFromDatabase($id);
 });

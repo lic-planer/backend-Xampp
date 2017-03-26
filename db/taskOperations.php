@@ -86,7 +86,7 @@ class taskOperations
 
     public function getListsTasks($id_list)
     {
-        $stmt = $this->con->prepare("SELECT t.id, t.name, t.description, t.term, t.attachment, t.id_list, t.item_order FROM `task` t RIGHT JOIN list l 
+        $stmt = $this->con->prepare("SELECT t.id, t.name, t.description, t.term, t.id_list, t.item_order FROM `task` t RIGHT JOIN list l 
             ON t.id_list = l.id WHERE t.id_list = ?");
 
         try {
@@ -157,27 +157,6 @@ class taskOperations
             $stmt->execute();
 
             echo '{"notice": {"text": "Termin zadania został zmieniony."}}';
-        } catch(PDOException $e){
-            echo '{"error": {"text": '.$e->getMessage().'}}';
-        }
-    }
-
-    public function updateAttachment($id, $attachment)
-    {
-        $sql = "UPDATE task SET
-            attachment    = :attachment
-            WHERE id = :id";
-
-        try {
-            $db = new db();
-            $db = $db->connect();
-
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam(':attachment', $attachment);
-            $stmt->bindParam(':id', $id);
-            $stmt->execute();
-
-            echo '{"notice": {"text": "Załącznik został zmieniony."}}';
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
@@ -347,5 +326,94 @@ class taskOperations
             echo 'PDOException : '.  $e->getMessage();
         }
     }
+
+    public function getProtectedValue($obj, $name) {
+        $array = (array)$obj;
+        $prefix = chr(0).'*'.chr(0);
+        return $array[$prefix.$name];
+    }
+
+    public function saveFileToFolder($id, $file, $attachName)
+    {
+        $attachDir = '../attachments/';
+        $name = $id.'-'.$attachName;
+        $uploaded = move_uploaded_file($file, $attachDir.$name);
+
+        if ($uploaded === true) {
+            echo '{"notice": {"text": "Zapisano w folderze."}}';
+        } else {
+            echo '{"error": {"text": "Wystąpił błąd podczas zapisu pliku."}}';
+        }
+    }
+
+
+    public function addFileToDatabase($id, $attachName)
+    {
+        $attachName2 = $id.'-'.$attachName;
+        $file = base64_encode($attachName2);
+
+        try {
+            $stmt = $this->con->prepare("INSERT INTO attachment (id, name, file) VALUES (?, ?, ?)");
+            $stmt->execute(array($id, $attachName, $file));
+
+            echo '{"notice": {"text": "Plik został dodany do bazy."}}';
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+    }
+
+
+    public function fileExists($id)
+    {
+        $stmt = $this->con->prepare("SELECT * FROM attachment WHERE id=?");
+        $stmt->execute(array($id));
+        $stmt->fetch(PDO::FETCH_ASSOC);
+        $num_rows = $stmt->rowCount();
+
+        if ($num_rows > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    public function deleteFileFromDatabase($id)
+    {
+        $sql = "DELETE FROM attachment
+            WHERE id = :id";
+
+        try {
+            $db = new db();
+            $db = $db->connect();
+
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+
+            echo '{"notice": {"text": "Usunięto plik z bazy."}}';
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+    }
+
+
+    public function deleteFileFromFolder($id)
+    {
+        $stmt = $this->con->prepare("SELECT * FROM attachment WHERE id=?");
+        $stmt->execute(array($id));
+        $attachment = $stmt->fetch(PDO::FETCH_ASSOC);
+        $file = $attachment['file'];
+        $file = base64_decode($file);
+
+        $attachDir = '../attachments/';
+        $delete = unlink($attachDir . $file);
+        if ($delete === true) {
+            echo '{"notice": {"text": "Usunięto z folderu."}}';
+        } else {
+            echo '{"error": {"text": "Wystąpił błąd podczas usuwania pliku."}}';
+        }
+    }
+
 
 }

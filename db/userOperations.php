@@ -56,21 +56,6 @@ class userOperations
         }
     }
 
-    public function getUsers()
-    {
-        $stmt = $this->con->prepare("SELECT * FROM user");
-
-        try {
-
-            $stmt->execute();
-            $users = $stmt->fetchAll(PDO::FETCH_OBJ);
-            echo json_encode($users, JSON_UNESCAPED_UNICODE);
-
-        } catch(PDOException $e){
-            echo '{"error": {"text": '.$e->getMessage().'}}';
-        }
-    }
-
     private function isUsernameInUse($username)
     {
         $stmt = $this->con->prepare("SELECT id FROM user WHERE username=?");
@@ -339,7 +324,6 @@ class userOperations
     {
         $stmt = $this->con->prepare("SELECT username FROM user WHERE activationToken=?");
         $stmt->execute(array($activationToken));
-        //$activationToken = $stmt->fetch(PDO::FETCH_ASSOC);
         $num_rows = $stmt->rowCount();
 
         if ($num_rows > 0) {
@@ -372,5 +356,117 @@ class userOperations
         $headers = 'From: http://arrez.vot.pl';
         mail($to,$subject,$message,$headers);
     }
+
+
+    public function getProtectedValue($obj, $name) {
+        $array = (array)$obj;
+        $prefix = chr(0).'*'.chr(0);
+        return $array[$prefix.$name];
+    }
+
+
+    public function checkTheImageType($avatarType)
+    {
+        if ($avatarType === "image/jpeg" || $avatarType === "image/gif" || $avatarType === "image/png") {
+            echo '{"notice": {"text": "Poprawny format obrazu."}}';
+            return true;
+        }
+        echo '{"error": {"text": "Niepoprawny format obrazu!"}}';
+        return false;
+    }
+
+
+    public function saveAvatarToFolder($id, $file, $avatarName)
+    {
+        $avatarsDir = '../avatars/';
+        $name = $id.'-'.$avatarName;
+        $uploaded = move_uploaded_file($file, $avatarsDir.$name);
+
+        if ($uploaded === true) {
+            echo '{"notice": {"text": "Zapisano w folderze."}}';
+        } else {
+            echo '{"error": {"text": "Wystąpił błąd podczas zapisu pliku."}}';
+        }
+    }
+
+
+    public function addAvatarToDatabase($id, $avatarName)
+    {
+        $avatarName = $id.'-'.$avatarName;
+        $avatar = base64_encode($avatarName);
+
+        $sql = "UPDATE user SET
+            avatar = :avatar
+            WHERE id = :id";
+
+        try {
+            $db = new db();
+            $db = $db->connect();
+
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':avatar', $avatar);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+
+            echo '{"notice": {"text": "Obrazek został dodany do bazy."}}';
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+    }
+
+
+    public function avatarExists($id)
+    {
+        $stmt = $this->con->prepare("SELECT * FROM user WHERE id=?");
+        $stmt->execute(array($id));
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $avatar = $user['avatar'];
+
+        if ($avatar !== null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    public function deleteAvatar($id)
+    {
+        $sql = "UPDATE user SET
+            avatar = null
+            WHERE id = :id";
+
+        try {
+            $db = new db();
+            $db = $db->connect();
+
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+
+            echo '{"notice": {"text": "Usunięto avatar z bazy."}}';
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+    }
+
+
+    public function deleteAvatarFromFolder($id)
+    {
+        $stmt = $this->con->prepare("SELECT * FROM user WHERE id=?");
+        $stmt->execute(array($id));
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $avatar = $user['avatar'];
+        $avatar = base64_decode($avatar);
+
+        $avatarsDir = '../avatars/';
+        $delete = unlink($avatarsDir.$avatar);
+        if ($delete === true) {
+            echo '{"notice": {"text": "Usunięto z folderu."}}';
+        } else {
+            echo '{"error": {"text": "Wystąpił błąd podczas usuwania pliku."}}';
+        }
+    }
+
 
 }
