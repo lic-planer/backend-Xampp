@@ -15,16 +15,16 @@ class taskOperations
         }
     } //__construct
 
-    public function createTask($name, $id_list)
+    public function createTask($task_name, $id_list)
     {
-        if (!$this->isNameCorrect($name)) {
+        if (!$this->isNameCorrect($task_name)) {
 
         } else {
             try {
-                $stmt = $this->con->prepare("INSERT INTO task (name, id_list) VALUES (?, ?)");
-                $stmt->execute(array($name, $id_list));
+                $stmt = $this->con->prepare("INSERT INTO task (task_name, id_list) VALUES (?, ?)");
+                $stmt->execute(array($task_name, $id_list));
 
-                if ($this->incItemOrder($name, $id_list)) {
+                if ($this->incItemOrder($task_name, $id_list)) {
                     echo '{"notice": {"text": "Stworzono zadanie."}}';
                 }
             } catch (PDOException $e) {
@@ -33,9 +33,9 @@ class taskOperations
         }
     }
 
-    public function isNameCorrect($name)
+    public function isNameCorrect($task_name)
     {
-        if ($name === null || $name === '') {
+        if ($task_name === null || $task_name === '') {
             echo '{"error": {"text": "Nazwa zadania nie może być pusta!"}}';
             return false;
         } else {
@@ -43,7 +43,7 @@ class taskOperations
         }
     }
 
-    public function incItemOrder ($name, $id_list)
+    public function incItemOrder($task_name, $id_list)
     {
         $stmt = $this->con->prepare("SELECT item_order FROM task WHERE id_list = ?");
         $stmt->execute(array($id_list));
@@ -56,13 +56,13 @@ class taskOperations
         if ($sizeOfItemOrder > 1) {
             $sql = "UPDATE task SET
                     item_order    = :item_order+1
-                    WHERE name = :name";
+                    WHERE task_name = :task_name";
 
             $db = new db();
             $db = $db->connect();
             $stmt = $db->prepare($sql);
             $stmt->bindParam(':item_order', $intMaxListOrder);
-            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':task_name', $task_name);
             $stmt->execute();
 
             return true;
@@ -70,48 +70,34 @@ class taskOperations
         return true;
     }
 
-    public function getTask($id)
+    public function getTask($id_task)
     {
-        $stmt = $this->con->prepare("SELECT * FROM task WHERE id = ?");
+        $stmt = $this->con->prepare("SELECT * FROM task WHERE id_task = ?");
 
         try {
-            $stmt->execute(array($id));
-            $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-            echo json_encode($user, JSON_UNESCAPED_UNICODE);
+            $stmt->execute(array($id_task));
+            $task = $stmt->fetchAll(PDO::FETCH_OBJ);
+            echo json_encode($task, JSON_UNESCAPED_UNICODE);
 
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
     }
 
-    public function getListsTasks($id_list)
-    {
-        $stmt = $this->con->prepare("SELECT t.id, t.name, t.description, t.term, t.id_list, t.item_order FROM `task` t RIGHT JOIN list l 
-            ON t.id_list = l.id WHERE t.id_list = ?");
 
-        try {
-            $stmt->execute(array($id_list));
-            $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-            echo json_encode($user, JSON_UNESCAPED_UNICODE);
-
-        } catch(PDOException $e){
-            echo '{"error": {"text": '.$e->getMessage().'}}';
-        }
-    }
-
-    public function updateName($id, $name)
+    public function updateName($id_task, $task_name)
     {
         $sql = "UPDATE task SET
-            name    = :name
-            WHERE id = :id";
+            task_name    = :task_name
+            WHERE id_task = :id_task";
 
         try {
             $db = new db();
             $db = $db->connect();
 
             $stmt = $db->prepare($sql);
-            $stmt->bindParam(':name', $name);
-            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':task_name', $task_name);
+            $stmt->bindParam(':id_task', $id_task);
             $stmt->execute();
 
             echo '{"notice": {"text": "Nazwa zadania została zmieniona."}}';
@@ -120,11 +106,11 @@ class taskOperations
         }
     }
 
-    public function updateDescription($id, $description)
+    public function updateDescription($id_task, $description)
     {
         $sql = "UPDATE task SET
             description    = :description
-            WHERE id = :id";
+            WHERE id_task = :id_task";
 
         try {
             $db = new db();
@@ -132,7 +118,7 @@ class taskOperations
 
             $stmt = $db->prepare($sql);
             $stmt->bindParam(':description', $description);
-            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':id_task', $id_task);
             $stmt->execute();
 
             echo '{"notice": {"text": "Opis zadania został zmieniony."}}';
@@ -141,11 +127,31 @@ class taskOperations
         }
     }
 
-    public function updateTerm($id, $term)
+    public function updateDescriptionToNull($id_task)
+    {
+        $sql = "UPDATE task SET
+            description = null
+            WHERE id_task = :id_task";
+
+        try {
+            $db = new db();
+            $db = $db->connect();
+
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':id_task', $id_task);
+            $stmt->execute();
+
+            echo '{"notice": {"text": "Opis zadania został usunięty."}}';
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+    }
+
+    public function updateTerm($id_task, $term)
     {
         $sql = "UPDATE task SET
             term    = :term
-            WHERE id = :id";
+            WHERE id_task = :id_task";
 
         try {
             $db = new db();
@@ -153,7 +159,7 @@ class taskOperations
 
             $stmt = $db->prepare($sql);
             $stmt->bindParam(':term', $term);
-            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':id_task', $id_task);
             $stmt->execute();
 
             echo '{"notice": {"text": "Termin zadania został zmieniony."}}';
@@ -162,17 +168,37 @@ class taskOperations
         }
     }
 
-    public function deleteTask($id)
+    public function updateTermToNull($id_task)
     {
-        $sql = "DELETE FROM task 
-            WHERE id = :id";
+        $sql = "UPDATE task SET
+            term    = null
+            WHERE id_task = :id_task";
 
         try {
             $db = new db();
             $db = $db->connect();
 
             $stmt = $db->prepare($sql);
-            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':id_task', $id_task);
+            $stmt->execute();
+
+            echo '{"notice": {"text": "Termin zadania został usunięty."}}';
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+    }
+
+    public function deleteTask($id_task)
+    {
+        $sql = "DELETE FROM task 
+            WHERE id_task = :id_task";
+
+        try {
+            $db = new db();
+            $db = $db->connect();
+
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':id_task', $id_task);
             $stmt->execute();
 
             echo '{"notice": {"text": "Zadanie zostało usunięte."}}';
@@ -192,27 +218,14 @@ class taskOperations
         }
     }
 
-    public function isTermGtCurrent($term)
-    {
-        $now = new DateTime();
-        $formatNow = $now->format('Y-m-d');
-
-        if ($term >= $formatNow) {
-            return true;
-        } else {
-            echo '{"notice": {"text": "Podana data nie może być wcześniejsza od dzisiejszej."}}';
-            return false;
-        }
-    }
-
     public function updateOrder($id_list, $task)
     {
         $i = 1 ;
-        foreach($task as $id) {
+        foreach($task as $id_task) {
 
             $sql  = "UPDATE task 
                         SET item_order = :item_order 
-                        WHERE id = :id AND id_list = :id_list";
+                        WHERE id_task = :id_task AND id_list = :id_list";
 
             try {
                 $db = new db();
@@ -220,7 +233,7 @@ class taskOperations
                 $query = $db->prepare($sql);
 
                 $query->bindParam(':item_order', $i);
-                $query->bindParam(':id', $id);
+                $query->bindParam(':id_task', $id_task);
                 $query->bindParam(':id_list', $id_list);
                 $query->execute();
 
@@ -229,13 +242,13 @@ class taskOperations
             }
             $i++ ;
         }
-        echo '{"notice": {"text": "Zaktualizowano kolejność zadań."}}';
+        echo '{"notice": {"text": "Kolejność zadań została zmieniona."}}';
     }
 
     public function existTasksInList($id_list, $task)
     {
         $arrTaskFromDb = array();
-        $stmt = $this->con->prepare("SELECT id FROM task WHERE id_list = ?");
+        $stmt = $this->con->prepare("SELECT id_task FROM task WHERE id_list = ?");
 
         try {
             $stmt->execute(array($id_list));
@@ -250,7 +263,7 @@ class taskOperations
             if ($result === array()) {
                 return true;
             } else {
-                echo '{"error": {"text": "Podane zadania nie są z tej samej listy!"}}';
+                //echo '{"error": {"text": "Podane zadania nie są z tej samej listy!"}}';
                 return false;
             }
 
@@ -261,13 +274,13 @@ class taskOperations
     }
 
 
-    public function correctOrder($id)
+    public function correctOrder($id_task)
     {
         $arrTaskFromDb = array();
-        $stmt = $this->con->prepare("SELECT id_list, item_order FROM task WHERE id = ?");
+        $stmt = $this->con->prepare("SELECT id_list, item_order FROM task WHERE id_task = ?");
 
         try {
-            $stmt->execute(array($id));
+            $stmt->execute(array($id_task));
             $task = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $id_list = $task[0]['id_list'];
             $item_order = $task[0]['item_order'];
@@ -321,7 +334,7 @@ class taskOperations
             $query = $db->prepare($sql);
             $query->bindParam(':id_list', $id_list);
             $query->execute();
-            echo '{"notice": {"text": "Zmniejszono kolejność zadań o 1."}}';
+            //echo '{"notice": {"text": "Zmniejszono kolejność zadań o 1."}}';
         } catch (PDOException $e) {
             echo 'PDOException : '.  $e->getMessage();
         }
@@ -337,13 +350,7 @@ class taskOperations
     {
         $attachDir = '../attachments/';
         $name = $id.'-'.$attachName;
-        $uploaded = move_uploaded_file($file, $attachDir.$name);
-
-        if ($uploaded === true) {
-            echo '{"notice": {"text": "Zapisano w folderze."}}';
-        } else {
-            echo '{"error": {"text": "Wystąpił błąd podczas zapisu pliku."}}';
-        }
+        move_uploaded_file($file, $attachDir.$name);
     }
 
 
@@ -356,7 +363,7 @@ class taskOperations
             $stmt = $this->con->prepare("INSERT INTO attachment (id, name, file) VALUES (?, ?, ?)");
             $stmt->execute(array($id, $attachName, $file));
 
-            echo '{"notice": {"text": "Plik został dodany do bazy."}}';
+            echo '{"notice": {"text": "Plik został dodany."}}';
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
@@ -391,7 +398,6 @@ class taskOperations
             $stmt->bindParam(':id', $id);
             $stmt->execute();
 
-            echo '{"notice": {"text": "Usunięto plik z bazy."}}';
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
@@ -407,13 +413,124 @@ class taskOperations
         $file = base64_decode($file);
 
         $attachDir = '../attachments/';
-        $delete = unlink($attachDir . $file);
-        if ($delete === true) {
-            echo '{"notice": {"text": "Usunięto z folderu."}}';
-        } else {
-            echo '{"error": {"text": "Wystąpił błąd podczas usuwania pliku."}}';
+        unlink($attachDir . $file);
+    }
+
+    public function getAttachmentNameById($id)
+    {
+        $stmt = $this->con->prepare("SELECT name FROM attachment WHERE id=?");
+        $stmt->execute(array($id));
+        $name = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $name = $name[0]['name'];
+        $fullName = $id.'-'.$name;
+        return $fullName;
+    }
+
+    public function downloadFile($id)
+    {
+        $path = '../attachments/';
+        $fileName = $this->getAttachmentNameById($id);
+        $filePath = $path.$fileName;
+        $fileSize = filesize($filePath);
+
+        header('Content-Description: File Transfer');
+        header("Cache-Control: must-revalidate");
+        header("Content-Type: application/stream");
+        header('Pragma: public');
+        header("Content-Length: ".$fileSize);
+        header('Content-Disposition: attachment; filename='.$fileName);
+
+        ob_clean();
+        flush();
+
+        readfile($filePath);
+        exit();
+    }
+
+    public function transferTaskToNewList($id_task, $id_list)
+    {
+        $sql = "UPDATE task SET
+            id_list = :id_list
+            WHERE id_task = :id_task";
+
+        try {
+            $db = new db();
+            $db = $db->connect();
+
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':id_task', $id_task);
+            $stmt->bindParam(':id_list', $id_list);
+            $stmt->execute();
+
+            echo '{"notice": {"text": "Zadanie przeniesiono do innej listy."}}';
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
         }
     }
 
+    public function getTaskName($id_task)
+    {
+        $stmt = $this->con->prepare("SELECT task_name FROM task WHERE id_task = ?");
+
+        try {
+            $stmt->execute(array($id_task));
+            $task = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $task = $task[0]['task_name'];
+            return $task;
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+    }
+
+    public function getMaxItemOrder($id_list)
+    {
+        $stmt = $this->con->prepare("SELECT item_order FROM task WHERE id_list = ?");
+
+        try {
+            $stmt->execute(array($id_list));
+            $itemOrder = $stmt->fetchAll(PDO::FETCH_OBJ);
+            $maxItemOrder = max($itemOrder);
+            $arrMaxItemOrder[] = (array)$maxItemOrder;
+            $intMaxListOrder = (int)$arrMaxItemOrder[0]['item_order'];
+            return $intMaxListOrder;
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+    }
+
+    public function incItemOrder1($id_task, $maxItemOrder)
+    {
+        $sql = "UPDATE task SET
+            item_order = :maxItemOrder + 1
+            WHERE id_task = :id_task";
+
+        try {
+            $db = new db();
+            $db = $db->connect();
+
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':maxItemOrder', $maxItemOrder);
+            $stmt->bindParam(':id_task', $id_task);
+            $stmt->execute();
+
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+    }
+
+    public function existsTaskInList($task_name, $id_list)
+    {
+        $stmt = $this->con->prepare("SELECT id_task FROM task WHERE task_name = ? AND id_list = ?");
+        $stmt->execute(array($task_name, $id_list));
+        $stmt->fetch(PDO::FETCH_ASSOC);
+        $num_rows = $stmt->rowCount();
+
+        if ($num_rows > 0) {
+            echo '{"error": {"text": "Zadanie w tej liście już istnieje!"}}';
+            return true;
+        } else {
+            return false;
+        }
+    }
 
 }

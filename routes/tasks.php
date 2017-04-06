@@ -21,20 +21,6 @@ $app->get("/api/task/{id}", function ($request, $response, $arguments) {
 
 });
 
-/*Get list’s tasks
- *Method: GET
- *Route: /api/list/{id}/tasks
- *Param: -
-*/
-$app->get("/api/list/{id}/tasks", function ($request, $response, $arguments) {
-
-    $id_list = $request->getAttribute('id');
-
-    $db = new taskOperations();
-    $db->getListsTasks($id_list);
-
-});
-
 /*Create task
  *Method: POST
  *Route: /api/list/{id}/task
@@ -66,12 +52,16 @@ $app->put("/api/task/{id}", function ($request, $response, $arguments) {
 
     if ($name !== '') {
         $db->updateName($id, $name);
-    } elseif ($term !== '') {
-        if ($db->isTermCorrect($term) && $db->isTermGtCurrent($term)) {
+    } elseif ($term !== '' && $term !== 'null') {
+        if ($db->isTermCorrect($term)) {
             $db->updateTerm($id, $term);
         }
-    } elseif ($description !== '') {
+    } elseif ($term === 'null') {
+            $db->updateTermToNull($id);
+    } elseif ($description !== '' && $description !== 'null') {
         $db->updateDescription($id, $description);
+    } elseif ($description === 'null') {
+        $db->updateDescriptionToNull($id);
     }
 
 });
@@ -151,4 +141,41 @@ $app->delete('/api/task/{id}/attachment', function(Request $request, Response $r
     $db = new taskOperations();
     $db->deleteFileFromFolder($id);
     $db->deleteFileFromDatabase($id);
+    echo '{"notice": {"text": "Usunięto plik."}}';
+});
+
+/*Download attachment
+ *Method: GET
+ *Route: /api/task/{id}/attachment
+ *Param: -
+ */
+$app->get('/api/task/{id}/attachment', function(Request $request, Response $response) {
+
+    $id = $request->getAttribute('id');
+    $db = new taskOperations();
+    if ($db->fileExists($id)) {
+        $db->downloadFile($id);
+    }
+});
+
+/*Transfer task to other list
+ *Method: GET
+ *Route: /api/task/{id}/toList/{id_list}
+ *Param: -
+ */
+$app->get('/api/task/{id}/toList/{id_list}', function(Request $request, Response $response) {
+
+    $id_task = $request->getAttribute('id');
+    $id_list = $request->getAttribute('id_list');
+
+    $db = new taskOperations();
+
+    $task_name = $db->getTaskName($id_task);
+    $maxItemOrder = $db->getMaxItemOrder($id_list);
+    //if (!$db->existsTaskInList($task_name, $id_list)) {
+        if ($db->correctOrder($id_task)) {
+            $db->incItemOrder1($id_task, $maxItemOrder);
+            $db->transferTaskToNewList($id_task, $id_list);
+        }
+    //}
 });

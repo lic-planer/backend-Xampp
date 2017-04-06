@@ -57,8 +57,8 @@ class commentOperations
 
     public function getTasksComments($id_task)
     {
-        $stmt = $this->con->prepare("SELECT c.id, c.content, c.edited, c.id_user, c.id_task FROM `comment` c RIGHT JOIN task t 
-            ON c.id_task = t.id WHERE c.id_task = ?");
+        $stmt = $this->con->prepare("SELECT c.id, c.content, c.edited, u.username FROM `comment` c RIGHT JOIN task t 
+            ON c.id_task = t.id_task RIGHT JOIN user u ON c.id_user = u.id WHERE c.id_task = ?");
 
         try {
             $stmt->execute(array($id_task));

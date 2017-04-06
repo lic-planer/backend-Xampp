@@ -7,20 +7,6 @@ use \Psr\Http\Message\ResponseInterface as Response;
 
 require '../db/listOperations.php';
 
-/*Get list
- *Method: GET
- *Route: /api/list/{id}
- *Param: -
-*/
-$app->get("/api/list/{id}", function ($request, $response, $arguments) {
-
-    $id = $request->getAttribute('id');
-
-    $db = new listOperations();
-    $db->getList($id);
-
-});
-
 /*Get lists
  *Method: GET
  *Route: /api/board/{id}/lists
@@ -31,7 +17,7 @@ $app->get("/api/board/{id}/lists", function ($request, $response, $arguments) {
     $id_board = $request->getAttribute('id');
 
     $db = new listOperations();
-    $db->getBoardsList($id_board);
+    $db->getBoardsListNested($id_board);
 
 });
 

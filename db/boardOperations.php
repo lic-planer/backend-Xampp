@@ -167,7 +167,7 @@ class boardOperations
             $stmt->bindParam(':id_user', $id_member);
             $stmt->execute();
 
-            echo '{"notice": {"text": "Usunięto użytkownika z tabeli."}}';
+            echo '{"notice": {"text": "Usunięto użytkownika z tablicy."}}';
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }

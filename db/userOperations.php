@@ -4,6 +4,7 @@ class userOperations
 {
     private $con = null;
 
+    //Funkcja służąca do łączenia się z bazą danych
     function __construct() {
         require_once '../db/db.php';
 
@@ -17,7 +18,6 @@ class userOperations
 
     public function createUser($username, $pass, $email, $avatar)
     {
-
         if ($username === null || $email === null || $pass === null) {
             echo '{"error": {"text": "Pole nazwa użytkownika, hasło i email nie mogą być puste!"}}';
         } elseif ($this->isUsernameInUse($username) || $this->isEmailInUse($email) || !$this->isUsernameCorrect($username)
@@ -74,16 +74,23 @@ class userOperations
     public function isEmailInUse($email)
     {
         $stmt = $this->con->prepare("SELECT id FROM user WHERE email=?");
-        $stmt->execute(array($email));
-        $stmt->fetch(PDO::FETCH_ASSOC);
-        $num_rows = $stmt->rowCount();
 
-        if ($num_rows > 0) {
-            echo '{"error": {"text": "Użytkownik o podanym mailu już istnieje!"}}';
-            return true;
-        } else {
-            return false;
+        try {
+            $stmt->execute(array($email));
+            $stmt->fetch(PDO::FETCH_ASSOC);
+            $num_rows = $stmt->rowCount();
+
+            if ($num_rows > 0) {
+                echo '{"error": {"text": "Użytkownik o podanym mailu już istnieje!"}}';
+                header("Status: 400 Bad request");
+                return true;
+            } else {
+                return false;
+            }
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
         }
+        return true;
     }
 
     public function isEmailCorrect($email)
@@ -92,6 +99,7 @@ class userOperations
             return true;
         } else {
             echo '{"error": {"text": "Niepoprawny format maila!"}}';
+            header("Status: 400 Bad request");
             return false;
         }
     }
@@ -145,7 +153,11 @@ class userOperations
         $stmt = $this->con->prepare("SELECT * FROM user WHERE username=?");
         $stmt->execute(array($username));
         $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-        return $user;
+        if ($user === array()){
+            return false;
+        } else {
+            return $user;
+        }
     }
 
     public function getUserByEmail($email)
@@ -195,7 +207,7 @@ class userOperations
             $stmt->bindParam(':id', $id);
             $stmt->execute();
 
-            echo '{"notice": {"text": "Email został zaktualizowany."}}';
+            //echo '{"notice": {"text": "Email został zaktualizowany."}}';
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
@@ -273,7 +285,7 @@ class userOperations
             $stmt->bindParam(':email', $email);
             $stmt->execute();
 
-            echo '{"notice": {"text": "Token aktywacyjny został wygenerowany."}}';
+            //echo '{"notice": {"text": "Token aktywacyjny został wygenerowany."}}';
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
@@ -293,7 +305,7 @@ class userOperations
             $stmt->bindParam(':id', $id);
             $stmt->execute();
 
-            echo '{"notice": {"text": "Email jest nieaktywny."}}';
+            //echo '{"notice": {"text": "Email jest nieaktywny."}}';
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
@@ -313,7 +325,6 @@ class userOperations
             $stmt->bindParam(':activationToken', $activationToken);
             $stmt->execute();
 
-            echo '{"notice": {"text": "Email jest aktywny."}}';
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
@@ -339,22 +350,30 @@ class userOperations
     public function sendEmail($email)
     {
         $stmt = $this->con->prepare("SELECT * FROM user WHERE email = ?");
-        $stmt->execute(array($email));
-        $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-        $username = array_column($user, 'username');
-        $activationToken = array_column($user, 'activationToken');
 
-        $to = $email;
-        $subject = 'AgRest - account';
-        $message = 'Account verification!
+        try {
+            $stmt->execute(array($email));
+            $user = $stmt->fetchAll(PDO::FETCH_OBJ);
+            $username = array_column($user, 'username');
+            $activationToken = array_column($user, 'activationToken');
+
+            $to = $email;
+            $subject = 'AgRest - account';
+            $message = 'Account verification!
         
         Hello '.$username[0].'. Please click this link to verify your account:
          
         http://arrez.vot.pl/public/index.php/verify?activationToken='.$activationToken[0].'  
 
         If you have received this email by mistake ignore it.';
-        $headers = 'From: http://arrez.vot.pl';
-        mail($to,$subject,$message,$headers);
+            $headers = 'From: http://arrez.vot.pl';
+            mail($to,$subject,$message,$headers);
+
+            echo '{"notice": {"text": "E-mail weryfikacyjny został wysłany na adres '.$to.'"}}';
+        } catch(PDOException $e){
+            echo '{"error": {"text": '.$e->getMessage().'}}';
+        }
+
     }
 
 
@@ -368,11 +387,20 @@ class userOperations
     public function checkTheImageType($avatarType)
     {
         if ($avatarType === "image/jpeg" || $avatarType === "image/gif" || $avatarType === "image/png") {
-            echo '{"notice": {"text": "Poprawny format obrazu."}}';
             return true;
         }
         echo '{"error": {"text": "Niepoprawny format obrazu!"}}';
         return false;
+    }
+
+    public function imageSize($avatarSize)
+    {
+        if ($avatarSize <= 150000) {
+            return true;
+        } else {
+            echo '{"error": {"text": "Rozmiar obrazu jest za duży! (max. 150 KB)"}}';
+            return false;
+        }
     }
 
 

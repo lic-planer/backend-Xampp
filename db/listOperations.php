@@ -43,7 +43,7 @@ class listOperations
         }
     }
 
-    public function incItemOrder ($name, $id_board)
+    public function incItemOrder($name, $id_board)
     {
         $stmt = $this->con->prepare("SELECT item_order FROM list WHERE id_board = ?");
         $stmt->execute(array($id_board));
@@ -70,33 +70,40 @@ class listOperations
         return true;
     }
 
-    public function getList($id)
+    public function getBoardsListNested($id_board)
     {
-        $stmt = $this->con->prepare("SELECT * FROM list WHERE id = ?");
-
-        try {
-            $stmt->execute(array($id));
-            $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-            echo json_encode($user, JSON_UNESCAPED_UNICODE);
-
-        } catch(PDOException $e){
-            echo '{"error": {"text": '.$e->getMessage().'}}';
-        }
-    }
-
-    public function getBoardsList($id_board)
-    {
-        $stmt = $this->con->prepare("SELECT l.id, l.name, l.id_board, l.item_order FROM `list` l RIGHT JOIN board b 
-            ON l.id_board = b.id WHERE l.id_board = ? ORDER BY l.item_order ASC");
+        $stmt = $this->con->prepare("SELECT l.id, l.name, l.id_board, l.item_order, t.id_task, t.task_name, t.item_order
+          FROM task t RIGHT JOIN list l ON t.id_list = l.id RIGHT JOIN  board b ON l.id_board = b.id 
+          WHERE l.id_board = ? ORDER BY l.item_order, t.item_order ASC");
 
         try {
             $stmt->execute(array($id_board));
-            $list = $stmt->fetchAll(PDO::FETCH_OBJ);
-            echo json_encode($list, JSON_UNESCAPED_UNICODE);
 
+            $arr = array();
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+                $arr[$row['id']]['id'] = $row['id'];
+                $arr[$row['id']]['name'] = $row['name'];
+                $temp = array('id_task' => $row['id_task'], 'task_name' => $row['task_name']);
+
+                if ($temp['id_task'] === null){
+                    $arr[$row['id']]['tasks'] = null;
+                } else {
+                    $arr[$row['id']]['tasks'][] = $temp;
+                }
+            }
+
+            $base_out = array();
+
+            foreach ($arr as $key => $record) {
+                $base_out[] = $record;
+            }
+
+            echo json_encode($base_out, JSON_UNESCAPED_UNICODE);
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
+
     }
 
     public function updateName($id, $name)

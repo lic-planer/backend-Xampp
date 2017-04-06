@@ -142,11 +142,12 @@ $app->put('/api/loggedUser/deactivate', function(Request $request, Response $res
 
 });
 
-/*Email verification - update
+/*Email verification - registration/update
  *Method: GET
- *Route: /verifyUpdate
+ *Route: /verify
  *Param: activationToken
 */
+
 $app->get('/verify', function(Request $request, Response $response) {
 
     $activationToken = $request->getParam('activationToken');
@@ -156,7 +157,6 @@ $app->get('/verify', function(Request $request, Response $response) {
         $db->changeEmailActivateT($activationToken);
     }
 });
-
 /*Add avatar
  *Method: POST
  *Route: /api/avatar
@@ -170,6 +170,7 @@ $app->post('/api/avatar', function(Request $request, Response $response) {
     if ($files != null) {
         $avatarType = 'type';
         $avatarName = 'name';
+        $avatarSize = 'size';
         $file = $avatar->file;
         $token = new token();
         $jwt = $token->getToken($request);
@@ -178,8 +179,9 @@ $app->post('/api/avatar', function(Request $request, Response $response) {
         $db = new userOperations();
         $avatarName = $db->getProtectedValue($avatar, $avatarName);
         $avatarType = $db->getProtectedValue($avatar, $avatarType);
+        $avatarSize = $db->getProtectedValue($avatar, $avatarSize);
 
-        if ($db->checkTheImageType($avatarType)) {
+        if ($db->checkTheImageType($avatarType) && $db->imageSize($avatarSize)) {
             if ($db->avatarExists($id)) {
                 $db->deleteAvatarFromFolder($id);
                 $db->deleteAvatar($id);

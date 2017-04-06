@@ -98,11 +98,14 @@ $app->post('/api/board/{id}/member', function(Request $request, Response $respon
 
     $db = new userOperations();
     $user = $db->getUserByUsername($username);
-    $id_user = array_column($user, 'id');
+    if ($user !== false) {
+        $id_user = array_column($user, 'id');
 
-    $db = new boardOperations();
-    $db->addMemeber($id_board, $id_user[0]);
-
+        $db = new boardOperations();
+        $db->addMemeber($id_board, $id_user[0]);
+    } else {
+        echo '{"error": {"text": "Podany użytkownik nie istnieje!"}}';
+    }
 });
 
 /*Get Board's Members
