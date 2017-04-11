@@ -1,27 +1,11 @@
 <?php
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+include '../src/headers.php';
 
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
 require '../db/listOperations.php';
-
-/*Get list
- *Method: GET
- *Route: /api/list/{id}
- *Param: -
-*/
-$app->get("/api/list/{id}", function ($request, $response, $arguments) {
-
-    $id = $request->getAttribute('id');
-
-    $db = new listOperations();
-    $db->getList($id);
-
-});
 
 /*Get lists
  *Method: GET
@@ -32,17 +16,22 @@ $app->get("/api/board/{id}/lists", function ($request, $response, $arguments) {
 
     $id_board = $request->getAttribute('id');
 
-    $db = new listOperations();
-    $db->getBoardsList($id_board);
+    $token = new token();
+    $jwt = $token->getToken($request);
+    $id_user = $jwt->user[0]->id;
 
+    $db = new listOperations();
+    if ($db->userHasAccess($id_user, $id_board)) {
+        $db->getBoardsListNested($id_board);
+    }
 });
 
 /*Create list
  *Method: POST
- *Route: /api/board/{id}/list/create
+ *Route: /api/board/{id}/list
  *Param: name
 */
-$app->post("/api/board/{id}/list/create", function ($request, $response, $arguments) {
+$app->post("/api/board/{id}/list", function ($request, $response, $arguments) {
 
     $id_board = $request->getAttribute('id');
     $name = trim($request->getParam('name'));
@@ -74,14 +63,33 @@ $app->put("/api/list/{id}", function ($request, $response, $arguments) {
 
 /*Delete list
  *Method: DELETE
- *Route: /api/list/delete/{id}
+ *Route: /api/list/{id}
  *Param: -
 */
-$app->delete("/api/list/delete/{id}", function ($request, $response, $arguments) {
+$app->delete("/api/list/{id}", function ($request, $response, $arguments) {
 
     $id = $request->getAttribute('id');
 
     $db = new listOperations();
-    $db->deleteList($id);
+    if ($db->correctOrder($id)) {
+        $db->deleteList($id);
+    }
+});
 
+
+/*Change order of lists
+ *Method: POST
+ *Route: /api/board/{id}/lists
+ *Param: list_order
+*/
+$app->post("/api/board/{id}/lists", function ($request, $response, $arguments) {
+
+    $id_board = $request->getAttribute('id');
+    $list_order = $request->getParam('list_order');
+    $list = explode(',' , $list_order);
+
+    $db = new listOperations();
+    if ($db->existListsInBoard($id_board, $list)) {
+        $db->updateOrder($id_board, $list);
+    }
 });

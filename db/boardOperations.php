@@ -33,16 +33,12 @@ class boardOperations
 
     public function getBoards()
     {
-        $sql = "SELECT * FROM board";
+        $stmt = $this->con->prepare("SELECT * FROM board");
 
         try {
-            $db = new db();
-            $db = $db->connect();
-
-            $stmt = $db->query($sql);
+            $stmt->execute();
             $boards = $stmt->fetchAll(PDO::FETCH_OBJ);
-            $db = null;
-            echo json_encode($boards);
+            echo json_encode($boards, JSON_UNESCAPED_UNICODE);
 
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
@@ -51,16 +47,12 @@ class boardOperations
 
     public function getOwnersBoards($id_owner)
     {
-        $sql = "SELECT * FROM board WHERE id_user = $id_owner";
+        $stmt = $this->con->prepare("SELECT * FROM board WHERE id_user = ?");
 
         try {
-            $db = new db();
-            $db = $db->connect();
-
-            $stmt = $db->query($sql);
+            $stmt->execute(array($id_owner));
             $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-            $db = null;
-            echo json_encode($user);
+            echo json_encode($user, JSON_UNESCAPED_UNICODE);
 
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
@@ -69,17 +61,13 @@ class boardOperations
 
     public function getBoardsMembers($id_board)
     {
-        $sql = "SELECT u.id, u.username, u.password, u.email, u.avatar, u.activate FROM `user` u LEFT JOIN member m 
-            ON u.id = m.id_user WHERE m.id_board = $id_board";
+        $stmt = $this->con->prepare("SELECT u.id, u.username, u.password, u.email, u.activate FROM `user` u LEFT JOIN member m 
+            ON u.id = m.id_user WHERE m.id_board = ?");
 
         try {
-            $db = new db();
-            $db = $db->connect();
-
-            $stmt = $db->query($sql);
+            $stmt->execute(array($id_board));;
             $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-            $db = null;
-            echo json_encode($user);
+            echo json_encode($user, JSON_UNESCAPED_UNICODE);
 
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
@@ -88,17 +76,14 @@ class boardOperations
 
     public function getMembersBoards($id_user)
     {
-        $sql = "SELECT b.id, b.name, b.id_user FROM `board` b LEFT JOIN member m 
-            ON b.id = m.id_board WHERE m.id_user = $id_user";
+        $stmt = $this->con->prepare("SELECT b.id, b.name, b.id_user FROM `board` b LEFT JOIN member m 
+            ON b.id = m.id_board WHERE m.id_user = ?");
 
         try {
-            $db = new db();
-            $db = $db->connect();
-
-            $stmt = $db->query($sql);
+            $stmt->execute(array($id_user));;
             $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-            $db = null;
-            echo json_encode($user);
+
+            echo json_encode($user, JSON_UNESCAPED_UNICODE);
 
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
@@ -155,10 +140,70 @@ class boardOperations
         }
     }
 
+    public function memberExists($id_user, $id_board)
+    {
+        $arrIdMemberFromDb = array();
+
+        $stmt = $this->con->prepare("SELECT id_user FROM member WHERE id_board = ?");
+        $stmt->execute(array($id_board));
+        $listOfIdMemberFromDatabase = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $it = new RecursiveIteratorIterator(new RecursiveArrayIterator($listOfIdMemberFromDatabase));
+        foreach($it as $v) {
+            $arrIdMemberFromDb[] = $v;
+        }
+
+        $resultMember = array_diff($id_user, $arrIdMemberFromDb);
+
+        if ($resultMember === array()) {
+            echo '{"error": {"text": "Podany użytkownik już istnieje w tej tablicy!"}}';
+            header("Status: 400 Bad request");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public function isAccountActivate($id_user)
+    {
+        $id_user = $id_user[0];
+        $stmt = $this->con->prepare("SELECT activate FROM user WHERE id = ?");
+        $stmt->execute(array($id_user));
+        $activate = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $activate = $activate[0]['activate'];
+
+        if ($activate === '0') {
+            echo '{"error": {"text": "Podany użytkownik jest nieaktywny!"}}';
+            header("Status: 400 Bad request");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public function ownerBoard($id_user, $id_board)
+    {
+        $id_user = $id_user[0];
+        $stmt = $this->con->prepare("SELECT id_user FROM board WHERE id = ?");
+        $stmt->execute(array($id_board));
+        $idOwner = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $idOwner = $idOwner[0]['id_user'];
+
+
+        if ($id_user === $idOwner) {
+            echo '{"error": {"text": "Nie możesz dodać siebie do tej tablicy, jesteś jej włascicielem!"}}';
+            header("Status: 400 Bad request");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     public function addMemeber($id_board, $id_user)
     {
+        $stmt = $this->con->prepare("INSERT INTO member (id_user, id_board) VALUES (?, ?)");
+
         try {
-            $stmt = $this->con->prepare("INSERT INTO member (id_user, id_board) VALUES (?, ?)");
             $stmt->execute(array($id_user, $id_board));
 
             echo '{"notice": {"text": "Dodano użytkownika do tablicy."}}';
@@ -181,7 +226,7 @@ class boardOperations
             $stmt->bindParam(':id_user', $id_member);
             $stmt->execute();
 
-            echo '{"notice": {"text": "Usunięto użytkownika z tabeli."}}';
+            echo '{"notice": {"text": "Usunięto użytkownika z tablicy."}}';
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }

@@ -1,8 +1,6 @@
 <?php
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+include '../src/headers.php';
 
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
@@ -23,10 +21,10 @@ $app->get('/api/boards', function(Request $request, Response $response) {
 
 /*Get Boards Owner
  *Method: GET
- *Route: /api/user/boards/owner
+ *Route: /api/loggedUser/boards/owner
  *Param: -
 */
-$app->get('/api/user/boards/owner', function(Request $request, Response $response) {
+$app->get('/api/loggedUser/boards/owner', function(Request $request, Response $response) {
 
     $token = new token();
     $jwt = $token->getToken($request);
@@ -39,10 +37,10 @@ $app->get('/api/user/boards/owner', function(Request $request, Response $respons
 
 /*Create Board
  *Method: POST
- *Route: /api/board/create
+ *Route: /api/board
  *Param: name
 */
-$app->post('/api/board/create', function(Request $request, Response $response) {
+$app->post('/api/board', function(Request $request, Response $response) {
 
     $token = new token();
     $jwt = $token->getToken($request);
@@ -90,21 +88,26 @@ $app->delete('/api/board/{id}', function(Request $request, Response $response) {
 
 /*Add Member
  *Method: POST
- *Route: /api/board/{id}/add
+ *Route: /api/board/{id}/member
  *Param: username
 */
-$app->post('/api/board/{id}/add', function(Request $request, Response $response) {
+$app->post('/api/board/{id}/member', function(Request $request, Response $response) {
 
     $id_board = $request->getAttribute('id');
     $username = $request->getParam('username');
 
     $db = new userOperations();
     $user = $db->getUserByUsername($username);
-    $id_user = array_column($user, 'id');
-
-    $db = new boardOperations();
-    $db->addMemeber($id_board, $id_user[0]);
-
+    if ($user !== false) {
+        $db = new boardOperations();
+        $id_user = array_column($user, 'id');
+        if ($db->isAccountActivate($id_user) && $db->ownerBoard($id_user, $id_board) && $db->memberExists($id_user, $id_board)) {
+            $db->addMemeber($id_board, $id_user[0]);
+        }
+    } else {
+        echo '{"error": {"text": "Podany użytkownik nie istnieje!"}}';
+        header("Status: 400 Bad request");
+    }
 });
 
 /*Get Board's Members
@@ -123,10 +126,10 @@ $app->get('/api/board/{id}/members', function(Request $request, Response $respon
 
 /*Get Member’s Boards
  *Method: GET
- *Route: /api/user/boards/member
+ *Route: /api/loggedUser/boards/member
  *Param: -
 */
-$app->get('/api/user/boards/member', function(Request $request, Response $response) {
+$app->get('/api/loggedUser/boards/member', function(Request $request, Response $response) {
 
     $token = new token();
     $jwt = $token->getToken($request);
@@ -139,10 +142,10 @@ $app->get('/api/user/boards/member', function(Request $request, Response $respon
 
 /*Delete Member
  *Method: DELETE
- *Route: /api/board/{id}/delete/{id_member}
+ *Route: /api/board/{id}/member/{id_member}
  *Param: -
 */
-$app->delete('/api/board/{id}/delete/{id_member}', function(Request $request, Response $response) {
+$app->delete('/api/board/{id}/member/{id_member}', function(Request $request, Response $response) {
 
     $id_board = $request->getAttribute('id');
     $id_member = $request->getAttribute('id_member');

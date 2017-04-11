@@ -1,8 +1,6 @@
 <?php
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+include '../src/headers.php';
 
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
@@ -14,17 +12,6 @@ define('ALGORITHM','HS256');
 require '../db/userOperations.php';
 require '../src/token.php';
 
-/*Get All Users
- *Method: GET
- *Route: /api/users
- *Param: -
-*/
-$app->get("/api/users", function ($request, $response, $arguments) {
-
-    $db = new userOperations();
-    $db->getUsers();
-
-});
 
 /*Get Single User
  *Method: GET
@@ -46,18 +33,16 @@ $app->get('/api/user', function(Request $request, Response $response) {
 /*User Registration
  *Method: POST
  *Route: /api/user/registration
- *Param: username, password, email, avatar
+ *Param: username, password, email
 */
 $app->post('/api/user/registration', function(Request $request, Response $response) {
 
     $username = trim($request->getParam('username'));
     $password = $request->getParam('password');
     $email = trim($request->getParam('email'));
-    $avatar = $request->getParam('avatar');
 
     $db = new userOperations();
-    $db->createUser($username,$password,$email,$avatar);
-
+    $db->createUser($username,$password,$email);
 });
 
 /*User Login
@@ -108,7 +93,7 @@ $app->post("/api/user/login", function ($request, $response, $arguments) {
 /*Update email || password
  *Method: PUT
  *Route: /api/user
- *Param: email || password
+ *Param: email || (oldPass && newPass)
 */
 $app->put('/api/user', function(Request $request, Response $response) {
 
@@ -117,21 +102,23 @@ $app->put('/api/user', function(Request $request, Response $response) {
 
     $id = $jwt->user[0]->id;
     $email = trim($request->getParam('email'));
-    $password = trim($request->getParam('password'));
+    $oldPass = trim($request->getParam('oldPass'));
+    $newPass = trim($request->getParam('newPass'));
 
     $db = new userOperations();
 
-    if ($password === null) {
-        if ($db->isEmailInUse($email) || !$db->isEmailCorrect($email)) {
-
-        } else {
+    if (($newPass === '') && ($oldPass === '')) {
+        if (!$db->isEmailInUse($email) && $db->isEmailCorrect($email)) {
             $db->updateEmail($id, $email);
+            $db->createActivationToken($email);
+            $db->changeEmailActivateF($id);
+            $db->sendEmail($email);
+            echo '{"notice": {"text": "E-mail weryfikacyjny został wysłany."}}';
         }
     } else {
-
-        if (!$db->isPasswordCorrect($password)) {
+        if (!$db->isPasswordCorrect($newPass) || !$db->isPasswordCorrect($oldPass) || !$db->passwordExists($id, $oldPass)) {
         } else {
-            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+            $passwordHash = password_hash($newPass, PASSWORD_DEFAULT);
             $db->updatePassword($id, $passwordHash);
         }
     }
@@ -139,11 +126,10 @@ $app->put('/api/user', function(Request $request, Response $response) {
 
 /*Deactivate user
  *Method: PUT
- *Route: /api/user/deactivate
+ *Route: /api/loggedUser/deactivate
  *Param: -
 */
-
-$app->put('/api/user/deactivate', function(Request $request, Response $response) {
+$app->put('/api/loggedUser/deactivate', function(Request $request, Response $response) {
 
     $token = new token();
     $jwt = $token->getToken($request);
@@ -153,4 +139,34 @@ $app->put('/api/user/deactivate', function(Request $request, Response $response)
     $db = new userOperations();
     $db->deactivateUser($id);
 
+});
+
+/*Email verification - registration/update
+ *Method: GET
+ *Route: /verify
+ *Param: activationToken
+*/
+$app->get('/verify', function(Request $request, Response $response) {
+
+    $activationToken = $request->getParam('activationToken');
+
+    $db = new userOperations();
+    if ($db->activationTokenCorrect($activationToken)) {
+        $db->changeEmailActivateT($activationToken);
+    }
+});
+
+/*Remind password
+ *Method: PUT
+ *Route: /api/user/remindPassword
+ *Param: email
+*/
+$app->put('/api/user/remindPassword', function(Request $request, Response $response) {
+
+    $email = trim($request->getParam('email'));
+
+    $db = new userOperations();
+    if (!$db->emailExists($email)) {
+        $db->sendEmailWithPassword($email);
+    }
 });
