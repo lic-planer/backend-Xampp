@@ -77,13 +77,10 @@ $app->delete("/api/task/{id}", function ($request, $response, $arguments) {
 
     $db = new taskOperations();
     if ($db->correctOrder($id)) {
-<<<<<<< HEAD
         if ($db->fileExists($id)) {
             $db->deleteFileFromFolder($id);
             $db->deleteFileFromDatabase($id);
         }
-=======
->>>>>>> origin/master
         $db->deleteTask($id);
     }
 });
@@ -119,15 +116,11 @@ $app->post('/api/task/{id}/attachment', function(Request $request, Response $res
     if ($files != null) {
 
         $attachName = 'name';
-<<<<<<< HEAD
         $attachSize = 'size';
-=======
->>>>>>> origin/master
         $file = $attachment->file;
 
         $db = new taskOperations();
         $attachName = $db->getProtectedValue($attachment, $attachName);
-<<<<<<< HEAD
         $attachSize = $db->getProtectedValue($attachment, $attachSize);
 
         if ($db->fileSize($attachSize))
@@ -139,16 +132,6 @@ $app->post('/api/task/{id}/attachment', function(Request $request, Response $res
             $db->saveFileToFolder($id, $file, $attachName);
             $db->addFileToDatabase($id, $attachName);
         }
-=======
-
-        if ($db->fileExists($id)) {
-            $db->deleteFileFromFolder($id);
-            $db->deleteFileFromDatabase($id);
-        }
-        $db->saveFileToFolder($id, $file, $attachName);
-        $db->addFileToDatabase($id, $attachName);
-
->>>>>>> origin/master
     } else {
         echo '{"error": {"text": "Nie wybrano pliku!"}}';
     }
@@ -164,31 +147,12 @@ $app->delete('/api/task/{id}/attachment', function(Request $request, Response $r
     $id = $request->getAttribute('id');
 
     $db = new taskOperations();
-<<<<<<< HEAD
     if ($db->fileExists($id)) {
         $db->deleteFileFromFolder($id);
         $db->deleteFileFromDatabase($id);
         echo '{"notice": {"text": "Usunięto plik."}}';
     } else {
         echo '{"notice": {"text": "Plik już nie istnieje."}}';
-=======
-    $db->deleteFileFromFolder($id);
-    $db->deleteFileFromDatabase($id);
-    echo '{"notice": {"text": "Usunięto plik."}}';
-});
-
-/*Download attachment
- *Method: GET
- *Route: /api/task/{id}/attachment
- *Param: -
- */
-$app->get('/api/task/{id}/attachment', function(Request $request, Response $response) {
-
-    $id = $request->getAttribute('id');
-    $db = new taskOperations();
-    if ($db->fileExists($id)) {
-        $db->downloadFile($id);
->>>>>>> origin/master
     }
 });
 
@@ -204,21 +168,10 @@ $app->get('/api/task/{id}/toList/{id_list}', function(Request $request, Response
 
     $db = new taskOperations();
 
-<<<<<<< HEAD
     $maxItemOrder = $db->getMaxItemOrder($id_list);
     if ($db->correctOrder($id_task)) {
         $db->incItemOrder1($id_task, $maxItemOrder);
         $db->transferTaskToNewList($id_task, $id_list);
     }
 
-=======
-    $task_name = $db->getTaskName($id_task);
-    $maxItemOrder = $db->getMaxItemOrder($id_list);
-    //if (!$db->existsTaskInList($task_name, $id_list)) {
-        if ($db->correctOrder($id_task)) {
-            $db->incItemOrder1($id_task, $maxItemOrder);
-            $db->transferTaskToNewList($id_task, $id_list);
-        }
-    //}
->>>>>>> origin/master
 });

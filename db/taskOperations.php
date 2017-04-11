@@ -218,10 +218,7 @@ class taskOperations
         }
     }
 
-<<<<<<< HEAD
     //Funkcja wykorzystywana do 'drag&drop'. Aktualizuje kolejność wyświetlania zadań.
-=======
->>>>>>> origin/master
     public function updateOrder($id_list, $task)
     {
         $i = 1 ;
@@ -249,10 +246,7 @@ class taskOperations
         echo '{"notice": {"text": "Kolejność zadań została zmieniona."}}';
     }
 
-<<<<<<< HEAD
     //Funkcja sprawdzająca czy podane zadania znajdują się w tej samej liście.
-=======
->>>>>>> origin/master
     public function existTasksInList($id_list, $task)
     {
         $arrTaskFromDb = array();
@@ -281,13 +275,9 @@ class taskOperations
         return true;
     }
 
-<<<<<<< HEAD
     //Funkcja wykorzystywana do 'drag&drop'. Sprawdza pozycję usuwanego zadania w bazie - jeżeli zajmuje ono
     //ostatnie miejsce w bazie to kolejność pozostałych zadań się nie zmienia. W przypadku kiedy usuwane zadanie
     //znajduje się przed innymi zadaniami, to wywoływana jest funkcja zmniejszająca wartość kolumny 'item_order'.
-=======
-
->>>>>>> origin/master
     public function correctOrder($id_task)
     {
         $arrTaskFromDb = array();
@@ -336,10 +326,7 @@ class taskOperations
         return true;
     }
 
-<<<<<<< HEAD
     //Funkcja zmniejszająca wartość kolumny ‘item_order’ o jeden w zadaniach, których indeks jest o jeden większy od usuwanego zadania.
-=======
->>>>>>> origin/master
     public function decItemOrder($id_list, $allGtKey)
     {
         $sql = "UPDATE task SET
@@ -374,7 +361,6 @@ class taskOperations
 
     public function addFileToDatabase($id, $attachName)
     {
-<<<<<<< HEAD
         $date = date('Y-m-d G:i:s', time());
 
         $sql = "UPDATE task SET
@@ -391,14 +377,6 @@ class taskOperations
             $stmt->bindParam(':attachment_date', $date);
             $stmt->bindParam(':id_task', $id);
             $stmt->execute();
-=======
-        $attachName2 = $id.'-'.$attachName;
-        $file = base64_encode($attachName2);
-
-        try {
-            $stmt = $this->con->prepare("INSERT INTO attachment (id, name, file) VALUES (?, ?, ?)");
-            $stmt->execute(array($id, $attachName, $file));
->>>>>>> origin/master
 
             echo '{"notice": {"text": "Plik został dodany."}}';
         } catch(PDOException $e){
@@ -409,20 +387,11 @@ class taskOperations
 
     public function fileExists($id)
     {
-<<<<<<< HEAD
         $stmt = $this->con->prepare("SELECT attachment_name FROM task WHERE id_task=?");
         $stmt->execute(array($id));
         $name = $stmt->fetch(PDO::FETCH_ASSOC);
         $name = $name['attachment_name'];
         if ($name !== null) {
-=======
-        $stmt = $this->con->prepare("SELECT * FROM attachment WHERE id=?");
-        $stmt->execute(array($id));
-        $stmt->fetch(PDO::FETCH_ASSOC);
-        $num_rows = $stmt->rowCount();
-
-        if ($num_rows > 0) {
->>>>>>> origin/master
             return true;
         } else {
             return false;
@@ -432,26 +401,17 @@ class taskOperations
 
     public function deleteFileFromDatabase($id)
     {
-<<<<<<< HEAD
         $sql = "UPDATE task SET
             attachment_name = null,
             attachment_date = null
             WHERE id_task = :id_task";
-=======
-        $sql = "DELETE FROM attachment
-            WHERE id = :id";
->>>>>>> origin/master
 
         try {
             $db = new db();
             $db = $db->connect();
 
             $stmt = $db->prepare($sql);
-<<<<<<< HEAD
             $stmt->bindParam(':id_task', $id);
-=======
-            $stmt->bindParam(':id', $id);
->>>>>>> origin/master
             $stmt->execute();
 
         } catch(PDOException $e){
@@ -462,19 +422,11 @@ class taskOperations
 
     public function deleteFileFromFolder($id)
     {
-<<<<<<< HEAD
         $stmt = $this->con->prepare("SELECT attachment_name FROM task WHERE id_task=?");
         $stmt->execute(array($id));
         $attachment = $stmt->fetch(PDO::FETCH_ASSOC);
         $file = $attachment['attachment_name'];
         $file = $id.'-'.$file;
-=======
-        $stmt = $this->con->prepare("SELECT * FROM attachment WHERE id=?");
-        $stmt->execute(array($id));
-        $attachment = $stmt->fetch(PDO::FETCH_ASSOC);
-        $file = $attachment['file'];
-        $file = base64_decode($file);
->>>>>>> origin/master
 
         $attachDir = '../attachments/';
         unlink($attachDir . $file);
@@ -482,45 +434,14 @@ class taskOperations
 
     public function getAttachmentNameById($id)
     {
-<<<<<<< HEAD
         $stmt = $this->con->prepare("SELECT attachment_name FROM task WHERE id_task=?");
         $stmt->execute(array($id));
         $name = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $name = $name[0]['attachment_name'];
-=======
-        $stmt = $this->con->prepare("SELECT name FROM attachment WHERE id=?");
-        $stmt->execute(array($id));
-        $name = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $name = $name[0]['name'];
->>>>>>> origin/master
         $fullName = $id.'-'.$name;
         return $fullName;
     }
 
-<<<<<<< HEAD
-=======
-    public function downloadFile($id)
-    {
-        $path = '../attachments/';
-        $fileName = $this->getAttachmentNameById($id);
-        $filePath = $path.$fileName;
-        $fileSize = filesize($filePath);
-
-        header('Content-Description: File Transfer');
-        header("Cache-Control: must-revalidate");
-        header("Content-Type: application/stream");
-        header('Pragma: public');
-        header("Content-Length: ".$fileSize);
-        header('Content-Disposition: attachment; filename='.$fileName);
-
-        ob_clean();
-        flush();
-
-        readfile($filePath);
-        exit();
-    }
-
->>>>>>> origin/master
     public function transferTaskToNewList($id_task, $id_list)
     {
         $sql = "UPDATE task SET
@@ -607,7 +528,6 @@ class taskOperations
         }
     }
 
-<<<<<<< HEAD
     public function fileSize($fileSize)
     {
         if ($fileSize <= 8388608) {
@@ -618,6 +538,4 @@ class taskOperations
         }
     }
 
-=======
->>>>>>> origin/master
 }

@@ -61,11 +61,7 @@ class boardOperations
 
     public function getBoardsMembers($id_board)
     {
-<<<<<<< HEAD
         $stmt = $this->con->prepare("SELECT u.id, u.username, u.password, u.email, u.activate FROM `user` u LEFT JOIN member m 
-=======
-        $stmt = $this->con->prepare("SELECT u.id, u.username, u.password, u.email, u.avatar, u.activate FROM `user` u LEFT JOIN member m 
->>>>>>> origin/master
             ON u.id = m.id_user WHERE m.id_board = ?");
 
         try {
@@ -144,7 +140,6 @@ class boardOperations
         }
     }
 
-<<<<<<< HEAD
     public function memberExists($id_user, $id_board)
     {
         $arrIdMemberFromDb = array();
@@ -204,8 +199,6 @@ class boardOperations
         }
     }
 
-=======
->>>>>>> origin/master
     public function addMemeber($id_board, $id_user)
     {
         $stmt = $this->con->prepare("INSERT INTO member (id_user, id_board) VALUES (?, ?)");

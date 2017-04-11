@@ -20,10 +20,7 @@ class userOperations
     {
         if ($username === null || $email === null || $pass === null) {
             echo '{"error": {"text": "Pole nazwa użytkownika, hasło i email nie mogą być puste!"}}';
-<<<<<<< HEAD
             header("Status: 400 Bad request");
-=======
->>>>>>> origin/master
         } elseif ($this->isUsernameInUse($username) || $this->isEmailInUse($email) || !$this->isUsernameCorrect($username)
             || !$this->isEmailCorrect($email) || !$this->isPasswordCorrect($pass)) {
 
@@ -31,22 +28,13 @@ class userOperations
             $passwordHash = password_hash($pass, PASSWORD_DEFAULT);
 
             try {
-<<<<<<< HEAD
                 $stmt = $this->con->prepare("INSERT INTO user (username, password, email) VALUES (?, ?, ?)");
                 $stmt->execute(array($username, $passwordHash, $email));
-=======
-                $stmt = $this->con->prepare("INSERT INTO user (username, password, email, avatar) VALUES (?, ?, ?, ?)");
-                $stmt->execute(array($username, $passwordHash, $email, $avatar));
->>>>>>> origin/master
 
                 $this->createActivationToken($email);
                 $this->sendEmail($email);
 
-<<<<<<< HEAD
                 echo '{"notice": {"text": "E-mail weryfikacyjny został wysłany."}}';
-=======
-                echo '{"notice": {"text": "Użytkownik został dodany."}}';
->>>>>>> origin/master
             } catch (PDOException $e) {
                 echo '{"error": {"text": ' . $e->getMessage() . '}}';
             }
@@ -59,19 +47,11 @@ class userOperations
         $stmt = $this->con->prepare("SELECT * FROM user WHERE id = ?");
 
         try {
-<<<<<<< HEAD
 
             $stmt->execute(array($id));
             $user = $stmt->fetchAll(PDO::FETCH_OBJ);
             echo json_encode($user, JSON_UNESCAPED_UNICODE);
 
-=======
-
-            $stmt->execute(array($id));
-            $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-            echo json_encode($user, JSON_UNESCAPED_UNICODE);
-
->>>>>>> origin/master
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
@@ -86,10 +66,7 @@ class userOperations
 
         if ($num_rows > 0) {
             echo '{"error": {"text": "Użytkownik o podanym nicku już istnieje!"}}';
-<<<<<<< HEAD
             header("Status: 400 Bad request");
-=======
->>>>>>> origin/master
             return true;
         } else {
             return false;
@@ -136,13 +113,8 @@ class userOperations
         if (preg_match("/^[a-zA-Z0-9]+$/",$username) && ($usernameLen >= 3 && $usernameLen <= 30)) {
             return true;
         } else {
-<<<<<<< HEAD
             echo '{"error": {"text": "Nieprawidłowa nazwa użytkownika! Nazwa użytkownika musi zawierać od 3 do 30 znaków, składać się z liter i cyfr oraz nie może zawierać spacji!"}}';
             header("Status: 400 Bad request");
-=======
-            echo '{"error": {"text": "Nieprawidłowa nazwa użytkownika! 
-            Nazwa użytkownika musi zawierać od 3 do 30 znaków, składać się z liter i cyfr oraz nie może zawierać spacji!"}}';
->>>>>>> origin/master
             return false;
         }
     }
@@ -151,10 +123,7 @@ class userOperations
     {
         if (strlen($password) < 8) {
             echo '{"error": {"text": "Hasło musi zawierać minimum 8 znaków!"}}';
-<<<<<<< HEAD
             header("Status: 400 Bad request");
-=======
->>>>>>> origin/master
             return false;
         } else {
             return true;
@@ -242,10 +211,6 @@ class userOperations
             $stmt->bindParam(':id', $id);
             $stmt->execute();
 
-<<<<<<< HEAD
-=======
-            //echo '{"notice": {"text": "Email został zaktualizowany."}}';
->>>>>>> origin/master
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
@@ -323,20 +288,13 @@ class userOperations
             $stmt->bindParam(':email', $email);
             $stmt->execute();
 
-<<<<<<< HEAD
-=======
-            //echo '{"notice": {"text": "Token aktywacyjny został wygenerowany."}}';
->>>>>>> origin/master
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
     }
 
-<<<<<<< HEAD
     //Po wysłaniu linku aktywacyjnego, funkcja ta automatycznie zmienia wartość kolumny 'emailActivate' w bazie danych na 0,
     //co jest równoważne z brakiem dostępu użytkownika do aplikacji.
-=======
->>>>>>> origin/master
     public function changeEmailActivateF($id)
     {
         $sql = "UPDATE user SET
@@ -351,19 +309,12 @@ class userOperations
             $stmt->bindParam(':id', $id);
             $stmt->execute();
 
-<<<<<<< HEAD
-=======
-            //echo '{"notice": {"text": "Email jest nieaktywny."}}';
->>>>>>> origin/master
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
     }
 
-<<<<<<< HEAD
     //Po wejściu w link aktywacyjny, funkcja ta automatycznie zmienia wartość kolumny w bazie danych na 1, co umożliwia użytkownikowi zalogowanie się.
-=======
->>>>>>> origin/master
     public function changeEmailActivateT($activationToken)
     {
         $sql = "UPDATE user SET
@@ -391,10 +342,7 @@ class userOperations
         $num_rows = $stmt->rowCount();
 
         if ($num_rows > 0) {
-<<<<<<< HEAD
             echo 'Weryfikacja e-maila przebiegła pomyślnie! Możesz się zalogować.';
-=======
-            echo '{"notice": {"text": "Weryfikacja e-maila przebiegła pomyślnie."}}';
             return true;
         } else {
             echo '{"notice": {"text": "Błąd weryfikacji e-maila."}}';
@@ -403,120 +351,6 @@ class userOperations
     }
 
 
-    public function sendEmail($email)
-    {
-        $stmt = $this->con->prepare("SELECT * FROM user WHERE email = ?");
-
-        try {
-            $stmt->execute(array($email));
-            $user = $stmt->fetchAll(PDO::FETCH_OBJ);
-            $username = array_column($user, 'username');
-            $activationToken = array_column($user, 'activationToken');
-
-            $to = $email;
-            $subject = 'AgRest - account';
-            $message = 'Account verification!
-        
-        Hello '.$username[0].'. Please click this link to verify your account:
-         
-        http://arrez.vot.pl/public/index.php/verify?activationToken='.$activationToken[0].'  
-
-        If you have received this email by mistake ignore it.';
-            $headers = 'From: http://arrez.vot.pl';
-            mail($to,$subject,$message,$headers);
-
-            echo '{"notice": {"text": "E-mail weryfikacyjny został wysłany na adres '.$to.'"}}';
-        } catch(PDOException $e){
-            echo '{"error": {"text": '.$e->getMessage().'}}';
-        }
-
-    }
-
-
-    public function getProtectedValue($obj, $name) {
-        $array = (array)$obj;
-        $prefix = chr(0).'*'.chr(0);
-        return $array[$prefix.$name];
-    }
-
-
-    public function checkTheImageType($avatarType)
-    {
-        if ($avatarType === "image/jpeg" || $avatarType === "image/gif" || $avatarType === "image/png") {
-            return true;
-        }
-        echo '{"error": {"text": "Niepoprawny format obrazu!"}}';
-        return false;
-    }
-
-    public function imageSize($avatarSize)
-    {
-        if ($avatarSize <= 150000) {
-            return true;
-        } else {
-            echo '{"error": {"text": "Rozmiar obrazu jest za duży! (max. 150 KB)"}}';
-            return false;
-        }
-    }
-
-
-    public function saveAvatarToFolder($id, $file, $avatarName)
-    {
-        $avatarsDir = '../avatars/';
-        $name = $id.'-'.$avatarName;
-        $uploaded = move_uploaded_file($file, $avatarsDir.$name);
-
-        if ($uploaded === true) {
-            echo '{"notice": {"text": "Zapisano w folderze."}}';
-        } else {
-            echo '{"error": {"text": "Wystąpił błąd podczas zapisu pliku."}}';
-        }
-    }
-
-
-    public function addAvatarToDatabase($id, $avatarName)
-    {
-        $avatarName = $id.'-'.$avatarName;
-        $avatar = base64_encode($avatarName);
-
-        $sql = "UPDATE user SET
-            avatar = :avatar
-            WHERE id = :id";
-
-        try {
-            $db = new db();
-            $db = $db->connect();
-
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam(':avatar', $avatar);
-            $stmt->bindParam(':id', $id);
-            $stmt->execute();
-
-            echo '{"notice": {"text": "Obrazek został dodany do bazy."}}';
-        } catch(PDOException $e){
-            echo '{"error": {"text": '.$e->getMessage().'}}';
-        }
-    }
-
-
-    public function avatarExists($id)
-    {
-        $stmt = $this->con->prepare("SELECT * FROM user WHERE id=?");
-        $stmt->execute(array($id));
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        $avatar = $user['avatar'];
-
-        if ($avatar !== null) {
->>>>>>> origin/master
-            return true;
-        } else {
-            echo '{"notice": {"text": "Błąd weryfikacji e-maila."}}';
-            return false;
-        }
-    }
-
-
-<<<<<<< HEAD
     public function sendEmail($email)
     {
         $stmt = $this->con->prepare("SELECT * FROM user WHERE email = ?");
@@ -566,29 +400,11 @@ class userOperations
         If you have received this email by mistake ignore it.';
             $headers = 'From: http://arrez.vot.pl';
             mail($to,$subject,$message,$headers);
-=======
-    public function deleteAvatar($id)
-    {
-        $sql = "UPDATE user SET
-            avatar = null
-            WHERE id = :id";
-
-        try {
-            $db = new db();
-            $db = $db->connect();
-
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam(':id', $id);
-            $stmt->execute();
-
-            echo '{"notice": {"text": "Usunięto avatar z bazy."}}';
->>>>>>> origin/master
         } catch(PDOException $e){
             echo '{"error": {"text": '.$e->getMessage().'}}';
         }
     }
 
-<<<<<<< HEAD
     public function generatePassword()
     {
         $rand = substr(md5(microtime()),rand(0,26),8);
@@ -621,25 +437,5 @@ class userOperations
         $prefix = chr(0).'*'.chr(0);
         return $array[$prefix.$name];
     }
-=======
-
-    public function deleteAvatarFromFolder($id)
-    {
-        $stmt = $this->con->prepare("SELECT * FROM user WHERE id=?");
-        $stmt->execute(array($id));
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        $avatar = $user['avatar'];
-        $avatar = base64_decode($avatar);
-
-        $avatarsDir = '../avatars/';
-        $delete = unlink($avatarsDir.$avatar);
-        if ($delete === true) {
-            echo '{"notice": {"text": "Usunięto z folderu."}}';
-        } else {
-            echo '{"error": {"text": "Wystąpił błąd podczas usuwania pliku."}}';
-        }
-    }
-
->>>>>>> origin/master
 
 }

@@ -43,10 +43,7 @@ class listOperations
         }
     }
 
-<<<<<<< HEAD
     //Funkcja zwiększająca wartości kolumny ‘item_order’, nowo utworzonej listy w bazie danych o 1.
-=======
->>>>>>> origin/master
     public function incItemOrder($name, $id_board)
     {
         $stmt = $this->con->prepare("SELECT item_order FROM list WHERE id_board = ?");
@@ -76,36 +73,25 @@ class listOperations
 
     public function getBoardsListNested($id_board)
     {
-<<<<<<< HEAD
         $stmt = $this->con->prepare("SELECT l.id, l.name, l.id_board, l.item_order, t.id_task, t.task_name, t.item_order, t.term
-=======
-        $stmt = $this->con->prepare("SELECT l.id, l.name, l.id_board, l.item_order, t.id_task, t.task_name, t.item_order
->>>>>>> origin/master
           FROM task t RIGHT JOIN list l ON t.id_list = l.id RIGHT JOIN  board b ON l.id_board = b.id 
           WHERE l.id_board = ? ORDER BY l.item_order, t.item_order ASC");
 
         try {
             $stmt->execute(array($id_board));
 
-<<<<<<< HEAD
             $stmt2 = $this->con->prepare("SELECT name FROM board WHERE id = ?");
             $stmt2->execute(array($id_board));
             $boardName = $stmt2->fetch(PDO::FETCH_ASSOC);
             $boardName = $boardName['name'];
 
-=======
->>>>>>> origin/master
             $arr = array();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
                 $arr[$row['id']]['id'] = $row['id'];
                 $arr[$row['id']]['name'] = $row['name'];
-<<<<<<< HEAD
                 $arr[$row['id']]['b_name'] = $boardName;
                 $temp = array('id_task' => $row['id_task'], 'task_name' => $row['task_name'], 'term' => $row['term']);
-=======
-                $temp = array('id_task' => $row['id_task'], 'task_name' => $row['task_name']);
->>>>>>> origin/master
 
                 if ($temp['id_task'] === null){
                     $arr[$row['id']]['tasks'] = null;
@@ -167,10 +153,7 @@ class listOperations
         }
     }
 
-<<<<<<< HEAD
     //Funkcja wykorzystywana do 'drag&drop'. Aktualizuje kolejność wyświetlania list.
-=======
->>>>>>> origin/master
     public function updateOrder($id_board, $list)
     {
         $i = 1 ;
@@ -198,10 +181,7 @@ class listOperations
         echo '{"notice": {"text": "Zaktualizowano kolejność list."}}';
     }
 
-<<<<<<< HEAD
     //Funkcja sprawdzająca czy podane listy znajdują się w tej samej tablicy.
-=======
->>>>>>> origin/master
     public function existListsInBoard($id_board, $list)
     {
         $arrListFromDb = array();
@@ -230,13 +210,9 @@ class listOperations
         return true;
     }
 
-<<<<<<< HEAD
     //Funkcja wykorzystywana do 'drag&drop'. Sprawdza pozycję usuwanej listy w bazie - jeżeli zajmuje ona
     //ostatnie miejsce w bazie to kolejność pozostałych list się nie zmienia. W przypadku kiedy usuwana lista
     //znajduje się przed innymi listami, to wywoływana jest funkcja zmniejszająca wartość kolumny 'item_order'.
-=======
-
->>>>>>> origin/master
     public function correctOrder($id)
     {
         $arrListFromDb = array();
@@ -269,10 +245,7 @@ class listOperations
         return true;
     }
 
-<<<<<<< HEAD
     //Funkcja zwracająca wszystkie listy, porządkując je rosnąco, na podstawie ‘item_order’.
-=======
->>>>>>> origin/master
     public function allLists($id_board)
     {
         $stmt = $this->con->prepare("SELECT l.item_order FROM `list` l RIGHT JOIN board b 
@@ -289,10 +262,7 @@ class listOperations
         return true;
     }
 
-<<<<<<< HEAD
     //Funkcja zmniejszająca wartość kolumny ‘item_order’ o jeden w listach, których indeks jest o jeden większy od listy usuwanej.
-=======
->>>>>>> origin/master
     public function decItemOrder($id_board, $allGtKey)
     {
         $sql = "UPDATE list SET
@@ -305,7 +275,6 @@ class listOperations
             $query = $db->prepare($sql);
             $query->bindParam(':id_board', $id_board);
             $query->execute();
-<<<<<<< HEAD
             //echo '{"notice": {"text": "Zmniejszono kolejność list o 1."}}';
         } catch (PDOException $e) {
             echo 'PDOException : '.  $e->getMessage();
@@ -346,9 +315,6 @@ class listOperations
                 return false;
             }
 
-=======
-            echo '{"notice": {"text": "Zmniejszono kolejność list o 1."}}';
->>>>>>> origin/master
         } catch (PDOException $e) {
             echo 'PDOException : '.  $e->getMessage();
         }
