@@ -99,6 +99,7 @@ $app->post('/api/board/{id}/member', function(Request $request, Response $respon
     $db = new userOperations();
     $user = $db->getUserByUsername($username);
     if ($user !== false) {
+<<<<<<< HEAD
         $db = new boardOperations();
         $id_user = array_column($user, 'id');
         if ($db->isAccountActivate($id_user) && $db->ownerBoard($id_user, $id_board) && $db->memberExists($id_user, $id_board)) {
@@ -107,6 +108,14 @@ $app->post('/api/board/{id}/member', function(Request $request, Response $respon
     } else {
         echo '{"error": {"text": "Podany użytkownik nie istnieje!"}}';
         header("Status: 400 Bad request");
+=======
+        $id_user = array_column($user, 'id');
+
+        $db = new boardOperations();
+        $db->addMemeber($id_board, $id_user[0]);
+    } else {
+        echo '{"error": {"text": "Podany użytkownik nie istnieje!"}}';
+>>>>>>> origin/master
     }
 });
 

@@ -40,9 +40,16 @@ $app->post('/api/user/registration', function(Request $request, Response $respon
     $username = trim($request->getParam('username'));
     $password = $request->getParam('password');
     $email = trim($request->getParam('email'));
+<<<<<<< HEAD
 
     $db = new userOperations();
     $db->createUser($username,$password,$email);
+=======
+    $avatar = $request->getParam('avatar');
+
+    $db = new userOperations();
+    $db->createUser($username,$password,$email,$avatar);
+>>>>>>> origin/master
 });
 
 /*User Login
@@ -108,12 +115,20 @@ $app->put('/api/user', function(Request $request, Response $response) {
     $db = new userOperations();
 
     if (($newPass === '') && ($oldPass === '')) {
+<<<<<<< HEAD
         if (!$db->isEmailInUse($email) && $db->isEmailCorrect($email)) {
+=======
+        if ($db->isEmailInUse($email) || !$db->isEmailCorrect($email)) {
+        } else {
+>>>>>>> origin/master
             $db->updateEmail($id, $email);
             $db->createActivationToken($email);
             $db->changeEmailActivateF($id);
             $db->sendEmail($email);
+<<<<<<< HEAD
             echo '{"notice": {"text": "E-mail weryfikacyjny został wysłany."}}';
+=======
+>>>>>>> origin/master
         }
     } else {
         if (!$db->isPasswordCorrect($newPass) || !$db->isPasswordCorrect($oldPass) || !$db->passwordExists($id, $oldPass)) {
@@ -138,6 +153,7 @@ $app->put('/api/loggedUser/deactivate', function(Request $request, Response $res
 
     $db = new userOperations();
     $db->deactivateUser($id);
+<<<<<<< HEAD
 
 });
 
@@ -146,6 +162,17 @@ $app->put('/api/loggedUser/deactivate', function(Request $request, Response $res
  *Route: /verify
  *Param: activationToken
 */
+=======
+
+});
+
+/*Email verification - registration/update
+ *Method: GET
+ *Route: /verify
+ *Param: activationToken
+*/
+
+>>>>>>> origin/master
 $app->get('/verify', function(Request $request, Response $response) {
 
     $activationToken = $request->getParam('activationToken');
@@ -155,6 +182,7 @@ $app->get('/verify', function(Request $request, Response $response) {
         $db->changeEmailActivateT($activationToken);
     }
 });
+<<<<<<< HEAD
 
 /*Remind password
  *Method: PUT
@@ -170,3 +198,59 @@ $app->put('/api/user/remindPassword', function(Request $request, Response $respo
         $db->sendEmailWithPassword($email);
     }
 });
+=======
+/*Add avatar
+ *Method: POST
+ *Route: /api/avatar
+ *Param: avatar
+ */
+$app->post('/api/avatar', function(Request $request, Response $response) {
+
+    $files = $request->getUploadedFiles();
+    $avatar = ($files["avatar"]);
+
+    if ($files != null) {
+        $avatarType = 'type';
+        $avatarName = 'name';
+        $avatarSize = 'size';
+        $file = $avatar->file;
+        $token = new token();
+        $jwt = $token->getToken($request);
+        $id = $jwt->user[0]->id;
+
+        $db = new userOperations();
+        $avatarName = $db->getProtectedValue($avatar, $avatarName);
+        $avatarType = $db->getProtectedValue($avatar, $avatarType);
+        $avatarSize = $db->getProtectedValue($avatar, $avatarSize);
+
+        if ($db->checkTheImageType($avatarType) && $db->imageSize($avatarSize)) {
+            if ($db->avatarExists($id)) {
+                $db->deleteAvatarFromFolder($id);
+                $db->deleteAvatar($id);
+            }
+            $db->saveAvatarToFolder($id, $file, $avatarName);
+            $db->addAvatarToDatabase($id, $avatarName);
+        }
+    } else {
+        echo '{"error": {"text": "Nie wybrano pliku!"}}';
+    }
+});
+
+/*Delete avatar
+ *Method: DELETE
+ *Route: /api/avatar
+ *Param: -
+ */
+$app->delete('/api/avatar', function(Request $request, Response $response) {
+
+    $token = new token();
+    $jwt = $token->getToken($request);
+    $id = $jwt->user[0]->id;
+
+    $db = new userOperations();
+    if ($db->avatarExists($id)) {
+        $db->deleteAvatarFromFolder($id);
+        $db->deleteAvatar($id);
+    }
+});
+>>>>>>> origin/master

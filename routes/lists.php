@@ -16,6 +16,7 @@ $app->get("/api/board/{id}/lists", function ($request, $response, $arguments) {
 
     $id_board = $request->getAttribute('id');
 
+<<<<<<< HEAD
     $token = new token();
     $jwt = $token->getToken($request);
     $id_user = $jwt->user[0]->id;
@@ -24,6 +25,11 @@ $app->get("/api/board/{id}/lists", function ($request, $response, $arguments) {
     if ($db->userHasAccess($id_user, $id_board)) {
         $db->getBoardsListNested($id_board);
     }
+=======
+    $db = new listOperations();
+    $db->getBoardsListNested($id_board);
+
+>>>>>>> origin/master
 });
 
 /*Create list
